@@ -2,7 +2,7 @@ name: Build Android APK
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   workflow_dispatch:
 
 jobs:
@@ -44,47 +44,7 @@ jobs:
 
       - name: Configure Android back handling and permissions
         run: |
-          node - <<'NODE'
-          const fs=require('fs');
-          const p='android-app/android/app/src/main/AndroidManifest.xml';
-          let s=fs.readFileSync(p,'utf8');
-          if(!s.includes('READ_MEDIA_IMAGES')) {
-            s=s.replace('<manifest', '<manifest');
-            s=s.replace(/<application/, '<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />\n    <application');
-          }
-          fs.writeFileSync(p,s);
-          const main='android-app/android/app/src/main/java/com/draftduel/app/MainActivity.java';
-          if(fs.existsSync(main)){
-            let m=fs.readFileSync(main,'utf8');
-            if(!m.includes('OnBackPressedCallback')){
-              m=m.replace(
-                'import com.getcapacitor.BridgeActivity;\n\npublic class MainActivity extends BridgeActivity {}',
-`import android.os.Bundle;
-import androidx.activity.OnBackPressedCallback;
-import com.getcapacitor.BridgeActivity;
-
-public class MainActivity extends BridgeActivity {
-  @Override
-  protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-      @Override
-      public void handleOnBackPressed() {
-        if (getBridge() != null && getBridge().getWebView() != null && getBridge().getWebView().canGoBack()) {
-          getBridge().getWebView().goBack();
-        } else {
-          setEnabled(false);
-          getOnBackPressedDispatcher().onBackPressed();
-        }
-      }
-    });
-  }
-}`
-              );
-              fs.writeFileSync(main,m);
-            }
-          }
-          NODE
+          node -e "const fs=require('fs');const p='android-app/android/app/src/main/AndroidManifest.xml';let s=fs.readFileSync(p,'utf8');if(!s.includes('READ_MEDIA_IMAGES')){s=s.replace('<application','<uses-permission android:name=\"android.permission.READ_MEDIA_IMAGES\" />\\n    <uses-permission android:name=\"android.permission.READ_EXTERNAL_STORAGE\" android:maxSdkVersion=\"32\" />\\n    <application');fs.writeFileSync(p,s);}const main='android-app/android/app/src/main/java/com/draftduel/app/MainActivity.java';if(fs.existsSync(main)){let m=fs.readFileSync(main,'utf8');if(!m.includes('OnBackPressedCallback')){const rep=['import android.os.Bundle;','import androidx.activity.OnBackPressedCallback;','import com.getcapacitor.BridgeActivity;','','public class MainActivity extends BridgeActivity {','  @Override','  protected void onCreate(Bundle savedInstanceState) {','    super.onCreate(savedInstanceState);','    getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {','      @Override','      public void handleOnBackPressed() {','        if (getBridge() != null && getBridge().getWebView() != null && getBridge().getWebView().canGoBack()) {','          getBridge().getWebView().goBack();','        } else {','          setEnabled(false);','          getOnBackPressedDispatcher().onBackPressed();','        }','      }','    });','  }','}'].join('\\n');m=m.replace('import com.getcapacitor.BridgeActivity;\\n\\npublic class MainActivity extends BridgeActivity {}',rep);fs.writeFileSync(main,m);}}"
 
       - name: Build APK
         working-directory: android-app/android
