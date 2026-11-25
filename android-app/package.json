@@ -1,0 +1,10 @@
+{
+  "name": "draft-duel-apk",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "sync": "node sync.js && npx cap sync android",
+    "add": "npx cap add android",
+    "open": "npx cap open android"
+  }
+}

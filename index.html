@@ -2,8 +2,8 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no"><meta name="theme-color" content="#050a1a"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg">
 <title>Draft Duel – 2 Player Football Draft</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,800;1,800&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<link href="fonts/barlow.css" rel="stylesheet">
+<script src="vendor/tailwind.js"></script>
 <style>
 :root{color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html,body{font-family:"Barlow Condensed","Arial Narrow",Arial,sans-serif;min-height:100%;margin:0;background-color:#020617;}
@@ -144,25 +144,70 @@ button:not(.gbtn):not(.hx-side):not(.hx-play):not(.rsb):not(.abt):active{transfo
 .lcs span{text-align:center;line-height:1}.lcs small{display:block;font-size:9px;font-weight:800;letter-spacing:.06em;opacity:.7}.lcs b{font-size:17px;font-weight:800}
 .bbw{filter:drop-shadow(0 4px 5px rgba(0,0,0,.5))}
 
-/* ===== CALMER MOTION ===== */
+/* ===== ULTRA MOTION & HOVER FX ===== */
 :root{--ease:cubic-bezier(.22,.68,.2,1)}
-button{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-/* calmer motion */
-#a>div{animation:fi .55s var(--ease)}
+html,body{background:#020617}
+button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;position:relative;overflow:hidden}
+button::before{content:"";position:absolute;inset:0;border-radius:inherit;background:radial-gradient(160px circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,.16),transparent 62%);opacity:0;pointer-events:none;transition:opacity .2s var(--ease)}
+button:focus-visible{outline:2px solid #facc15;outline-offset:2px}
+#a>div{animation:screenIn .48s var(--ease) both}
+@keyframes screenIn{from{opacity:0;transform:translateY(16px) scale(.985);filter:blur(5px)}to{opacity:1;transform:none;filter:none}}
+@keyframes cardUp{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes chipIn{from{opacity:0;transform:translateY(-9px) scale(.82)}to{opacity:1;transform:none}}
+@keyframes popIn{from{opacity:0;transform:scale(.86)}to{opacity:1;transform:none}}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,16px) scale(.88)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
+@keyframes softGlow{0%,100%{box-shadow:0 0 10px rgba(250,204,21,.25)}50%{box-shadow:0 0 26px rgba(250,204,21,.65)}}
+@keyframes rippleFx{from{transform:scale(0);opacity:.85}to{transform:scale(1);opacity:0}}
+@keyframes sparkFx{from{transform:translate(-50%,-50%) rotate(var(--a)) translateX(0) scale(1);opacity:1}to{transform:translate(-50%,-50%) rotate(var(--a)) translateX(var(--d)) scale(.2);opacity:0}}
+@keyframes orbFx{0%{transform:translate(0,0) scale(1)}50%{transform:translate(28px,-38px) scale(1.15)}100%{transform:translate(-18px,22px) scale(.95)}}
 .hx-pw{animation:hxp 4.2s ease-in-out infinite}
 .hx-a{animation-duration:7s}.hx-b{animation-duration:7s}
 .hx-cin:after{animation-duration:7s}
 .hx-t .g{animation-duration:6s}
 .bob{animation-duration:4s}
-.soldstamp{animation:stamp .7s var(--ease)}
-/* ===== NO-BLINK / NATIVE FEEL ===== */
-html,body{background:#020617}
-#a>div,#a>div>*{animation:none!important}
-#a>div{opacity:1!important;transform:none!important}
 .hx-card:not(.hx-a):not(.hx-b){transform:translateZ(0);backface-visibility:hidden}
 .hx-card,.hx-cin{-webkit-font-smoothing:antialiased}
-.hx-tile,#a .transition-all,#a [class*="transition"]{transition:none!important}
-</style></head><body><div class="hx-bg"><i class="hx-beam" style="left:-8%;--r:-17deg;--c:rgba(250,204,21,.4)"></i><i class="hx-beam" style="left:calc(50% - 75px);--r:0deg;--c:rgba(255,255,255,.28)"></i><i class="hx-beam" style="right:-8%;--r:17deg;--c:rgba(96,165,250,.45)"></i><div class="hx-pitch"></div><i class="hx-pt" style="left:11%;width:2px;height:2px;animation-delay:0.0s;animation-duration:7s"></i><i class="hx-pt" style="left:48%;width:3px;height:3px;animation-delay:0.9s;animation-duration:8s"></i><i class="hx-pt" style="left:85%;width:4px;height:4px;animation-delay:1.8s;animation-duration:9s"></i><i class="hx-pt" style="left:22%;width:2px;height:2px;animation-delay:2.7s;animation-duration:10s"></i><i class="hx-pt" style="left:59%;width:3px;height:3px;animation-delay:3.6s;animation-duration:11s"></i><i class="hx-pt" style="left:96%;width:4px;height:4px;animation-delay:4.5s;animation-duration:7s"></i><i class="hx-pt" style="left:33%;width:2px;height:2px;animation-delay:5.4s;animation-duration:8s"></i><i class="hx-pt" style="left:70%;width:3px;height:3px;animation-delay:6.3s;animation-duration:9s"></i><i class="hx-pt" style="left:7%;width:4px;height:4px;animation-delay:7.2s;animation-duration:10s"></i><i class="hx-pt" style="left:44%;width:2px;height:2px;animation-delay:8.1s;animation-duration:11s"></i><i class="hx-pt" style="left:81%;width:3px;height:3px;animation-delay:9.0s;animation-duration:7s"></i><i class="hx-pt" style="left:18%;width:4px;height:4px;animation-delay:9.9s;animation-duration:8s"></i><i class="hx-pt" style="left:55%;width:2px;height:2px;animation-delay:10.8s;animation-duration:9s"></i><i class="hx-pt" style="left:92%;width:3px;height:3px;animation-delay:11.7s;animation-duration:10s"></i><div class="hx-vig"></div></div><div id="a"></div>
+.tilt{transition:transform .18s var(--ease),filter .18s var(--ease)}
+.orb{position:absolute;border-radius:50%;filter:blur(65px);opacity:.4;animation:orbFx 16s ease-in-out infinite alternate}
+.orb.a{width:230px;height:230px;left:-4%;top:12%;background:#1d4ed8}.orb.b{width:190px;height:190px;right:-3%;top:38%;background:#a855f7;animation-delay:-7s}
+.ripple{position:absolute;border-radius:50%;pointer-events:none;z-index:2;background:radial-gradient(circle,rgba(255,255,255,.7),rgba(255,255,255,0) 68%);animation:rippleFx .55s var(--ease) forwards}
+.spark{position:fixed;width:7px;height:7px;border-radius:50%;pointer-events:none;z-index:99;box-shadow:0 0 8px currentColor;animation:sparkFx .7s var(--ease) forwards}
+.bidhist{height:32px;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scroll-behavior:smooth;scrollbar-width:none;-ms-overflow-style:none}
+.bidhist::-webkit-scrollbar{display:none}
+.bidhist>.hchip,.bidhist>.hsep{flex:0 0 auto}
+.bidhist>.hchip,.hchip{animation:chipIn .3s var(--ease) both}
+.bidpop,.pop{animation:popIn .34s var(--ease)}
+.toast{animation:toastIn .28s var(--ease)}
+.soldstamp{animation:stamp .7s var(--ease)}
+.bbw{animation:cardUp .42s var(--ease) backwards}
+.bbw:nth-child(2){animation-delay:.05s}.bbw:nth-child(3){animation-delay:.1s}.bbw:nth-child(4){animation-delay:.15s}
+.pbw{animation:cardUp .45s .18s var(--ease) backwards}
+.hx-tile{animation:cardUp .4s var(--ease) backwards}
+.hx-tile:nth-child(2){animation-delay:.06s}.hx-tile:nth-child(3){animation-delay:.12s}.hx-tile:nth-child(4){animation-delay:.18s}
+.teamrow{animation:cardUp .4s var(--ease) backwards;transition:transform .2s var(--ease),box-shadow .2s var(--ease),border-color .2s}
+.pitch{transition:box-shadow .4s var(--ease)}
+.glow{animation:softGlow 2.4s ease-in-out infinite}
+@media (hover:hover) and (pointer:fine){
+ button:not(:disabled):hover::before{opacity:1}
+ button:not(:disabled){transition:filter .18s var(--ease),transform .18s var(--ease),box-shadow .18s var(--ease)}
+ button:not(:disabled):hover{filter:brightness(1.12)}
+ .gbtn:not(:disabled):hover{transform:translateY(-3px) scale(1.03);box-shadow:0 7px 0 #854d0e,0 12px 30px rgba(234,179,8,.6)}
+ .bbtn:not(:disabled):hover,.abt:not(:disabled):hover,.hx-side:hover,.hx-play:hover{transform:translateY(-3px);filter:brightness(1.14)}
+ .bbw:hover{transform:translateY(-6px) scale(1.03);filter:drop-shadow(0 10px 10px rgba(0,0,0,.65)) drop-shadow(0 0 16px var(--k))}
+ .bbw:hover .bb span{transform:translateY(-3px);filter:brightness(1.24)}
+ .pbw:hover{transform:translateY(-3px)}
+ .pbw:hover .pbt span{transform:translateY(-3px);filter:brightness(1.22)}
+ .rsb:not(:disabled):hover span{transform:translateY(-3px);filter:brightness(1.2)}
+ .hx-side:hover span,.hx-play:hover span{transform:translateY(-4px);filter:brightness(1.16)}
+ .hx-tile:hover{transform:translateY(-6px) scale(1.02);border-color:rgba(250,204,21,.8);box-shadow:0 0 22px rgba(250,204,21,.3)}
+ .hx-tile.on{animation:softGlow 2.6s ease-in-out infinite}
+ .hx-card:hover{filter:brightness(1.12)}
+ .hx-snd:hover{background:#1e293b;color:#fff;box-shadow:0 0 16px rgba(250,204,21,.4)}
+ .teamrow:hover{transform:translateX(5px);border-color:#60a5fa;box-shadow:0 8px 20px rgba(37,99,235,.2)}
+ #lst button:not(:disabled):hover{transform:translateY(-3px);border-color:#3b82f6;box-shadow:0 10px 22px rgba(0,0,0,.5)}
+}
+@media (prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+</style></head><body><div class="hx-bg"><i class="orb a"></i><i class="orb b"></i><i class="hx-beam" style="left:-8%;--r:-17deg;--c:rgba(250,204,21,.4)"></i><i class="hx-beam" style="left:calc(50% - 75px);--r:0deg;--c:rgba(255,255,255,.28)"></i><i class="hx-beam" style="right:-8%;--r:17deg;--c:rgba(96,165,250,.45)"></i><div class="hx-pitch"></div><i class="hx-pt" style="left:11%;width:2px;height:2px;animation-delay:0.0s;animation-duration:7s"></i><i class="hx-pt" style="left:48%;width:3px;height:3px;animation-delay:0.9s;animation-duration:8s"></i><i class="hx-pt" style="left:85%;width:4px;height:4px;animation-delay:1.8s;animation-duration:9s"></i><i class="hx-pt" style="left:22%;width:2px;height:2px;animation-delay:2.7s;animation-duration:10s"></i><i class="hx-pt" style="left:59%;width:3px;height:3px;animation-delay:3.6s;animation-duration:11s"></i><i class="hx-pt" style="left:96%;width:4px;height:4px;animation-delay:4.5s;animation-duration:7s"></i><i class="hx-pt" style="left:33%;width:2px;height:2px;animation-delay:5.4s;animation-duration:8s"></i><i class="hx-pt" style="left:70%;width:3px;height:3px;animation-delay:6.3s;animation-duration:9s"></i><i class="hx-pt" style="left:7%;width:4px;height:4px;animation-delay:7.2s;animation-duration:10s"></i><i class="hx-pt" style="left:44%;width:2px;height:2px;animation-delay:8.1s;animation-duration:11s"></i><i class="hx-pt" style="left:81%;width:3px;height:3px;animation-delay:9.0s;animation-duration:7s"></i><i class="hx-pt" style="left:18%;width:4px;height:4px;animation-delay:9.9s;animation-duration:8s"></i><i class="hx-pt" style="left:55%;width:2px;height:2px;animation-delay:10.8s;animation-duration:9s"></i><i class="hx-pt" style="left:92%;width:3px;height:3px;animation-delay:11.7s;animation-duration:10s"></i><div class="hx-vig"></div></div><div id="a"></div>
 <script>
 const RAW=`br|Brazil|2002|Marcos:GK:84,Dida:GK:75,Lucio:CB:84,Edmilson:CB:80,Roque Junior:CB:76,Roberto Carlos:LB:89,Cafu:RB:89,Gilberto Silva:DM:83,Kleberson:CM:77,Juninho Paulista:AM:80,Rivaldo:AM:91,Ronaldinho:LW:88,Denilson:RW:75,Ronaldo:ST:94,Luizao:ST:71
 fr|France|1998|Barthez:GK:84,Desailly:CB:88,Blanc:CB:85,Leboeuf:CB:80,Lizarazu:LB:84,Thuram:RB:86,Deschamps:DM:83,Petit:CM:81,Zidane:AM:95,Djorkaeff:AM:84,Karembeu:RM:74,Henry:LW:85,Dugarry:RW:79,Guivarc'h:ST:75,Trezeguet:ST:77
@@ -199,7 +244,24 @@ au|Australia|2006|Schwarzer:GK:82,Neill:CB:76,Moore:CB:72,Chipperfield:LB:74,Eme
 pl|Poland|1974|Tomaszewski:GK:82,Zmuda:CB:80,Musial:CB:74,Szymanowski:LB:74,Gorgon:CB:78,Kasperczak:CM:78,Deyna:AM:88,Gadocha:LW:82,Lato:RW:86,Szarmach:ST:78
 fr|France|2022|Lloris:GK:86,Varane:CB:85,Upamecano:CB:82,T. Hernandez:LB:84,Kounde:RB:82,Tchouameni:DM:82,Rabiot:CM:82,Griezmann:AM:87,Dembele:RW:83,Giroud:ST:82,Mbappe:ST:94
 es|Spain|2024|Unai Simon:GK:86,Laporte:CB:83,Le Normand:CB:82,Cucurella:LB:82,Carvajal:RB:86,Rodri:DM:91,Pedri:CM:86,Fabian Ruiz:CM:84,Olmo:AM:86,N. Williams:LW:85,Yamal:RW:88,Morata:ST:80
-gb|England|2024|Pickford:GK:82,Stones:CB:85,Guehi:CB:83,Trippier:LB:80,Walker:RB:83,Rice:DM:87,Mainoo:CM:78,Bellingham:AM:90,Foden:LW:87,Saka:RW:88,Kane:ST:90,Palmer:AM:82`;
+gb|England|2024|Pickford:GK:82,Stones:CB:85,Guehi:CB:83,Trippier:LB:80,Walker:RB:83,Rice:DM:87,Mainoo:CM:78,Bellingham:AM:90,Foden:LW:87,Saka:RW:88,Kane:ST:90,Palmer:AM:82
+br|Brazil|1994|Taffarel:GK:83,Jorginho:CB:85,Aldair:CB:86,Ricardo Rocha:CB:80,Branco:LB:80,Cafu:RB:85,Dunga:DM:87,Zico:AM:88,Rai:AM:84,Bebeto:ST:88,Romario:ST:95,Ronaldo:ST:88
+de|Germany|1990|Illgner:GK:85,Buchwald:CB:84,Augenthaler:CB:82,Brehme:LB:86,Reuter:RB:83,Matthaus:DM:94,Effenberg:CM:84,Hassler:AM:88,Klinsmann:ST:90,Voller:ST:88,Beinlich:CM:76
+it|Italy|1990|Zenga:GK:87,Baresi:CB:94,Costacurta:CB:88,Ferri:CB:84,Maldini:LB:92,Donnarumma:RB:80,Ancelotti:DM:84,De Agostini:CM:83,Giannini:CM:85,Vialli:ST:88,Carnevale:ST:78
+fr|France|2000|Barthez:GK:85,Thuram:CB:88,Desailly:CB:88,Blanc:CB:86,Lizarazu:LB:84,Deschamps:DM:85,Petit:CM:83,Vieira:DM:87,Zidane:AM:96,Djorkaeff:AM:85,Henry:LW:88,Trezeguet:ST:84,Dugarry:ST:78,Wiltord:RW:80
+es|Spain|2008|Casillas:GK:92,Puyol:CB:90,Pique:CB:87,Marchena:CB:82,Capdevila:LB:82,Sergio Ramos:RB:88,Senna:DM:85,Busquets:DM:86,Xavi:CM:93,Iniesta:AM:92,Fabregas:CM:86,Silva:RW:87,Villa:ST:91,Torres:ST:85
+nl|Netherlands|2010|Stekelenburg:GK:83,Mathijsen:CB:82,Van der Wiel:RB:82,Braafheid:LB:78,Van Bommel:DM:86,De Jong:DM:82,Sneijder:AM:92,Van der Vaart:AM:88,Robben:RW:92,Van Persie:ST:90,Kuyt:ST:82,Nistelrooy:ST:86,Elia:LW:76
+pt|Portugal|2004|Ricardo:GK:82,Carvalho:CB:85,Jorge Costa:CB:80,Miguel:RB:80,Rui Jorge:LB:78,Costinha:DM:80,Maniche:CM:85,Deco:AM:88,Figo:RW:90,Cristiano Ronaldo:RW:88,Nuno Gomes:ST:80,Pauleta:ST:82
+gb|England|1990|Shilton:GK:82,Wright:CB:84,Adams:CB:86,Pallister:CB:80,Pearce:LB:82,Stevens:RB:78,Gascoigne:CM:88,Barnes:LW:87,Platt:AM:85,Lineker:ST:88,Beardsley:ST:80
+ar|Argentina|1978|Fillol:GK:84,Passarella:CB:89,Galvan:CB:83,Olguin:RB:80,Tarantini:LB:80,Gallego:DM:84,Kempes:ST:93,Bertoni:AM:85,Valdano:LW:80,Houseman:RW:78,Luque:ST:80
+us|USA|2014|Howard:GK:84,Besler:CB:81,Brooks:CB:80,Gonzalez:CB:79,Johnson:LB:78,Cherundolo:RB:78,Beckerman:DM:78,Bradley:CM:82,Dempsey:AM:85,Donovan:LW:84,Altidore:ST:78,Guzan:RW:76
+jp|Japan|2022|Gonda:GK:78,Yoshida:CB:82,Itakura:CB:79,Taniguchi:CB:78,Nagatomo:LB:76,Doan:RW:81,Endo:DM:82,Kubo:RW:84,Mitoma:LW:84,Kamada:AM:82,Maeda:ST:78,Osako:ST:77
+kr|South Korea|2022|Kim Seung-gyu:GK:79,Kim Young-gwon:CB:81,Minjae Kim:CB:83,Hong Chul:CB:78,Kim Jin-su:LB:79,Seol Young-woo:RB:78,Park Seung-ho:DM:80,Lee Kang-in:AM:84,Hwang Hee-chan:LW:82,Son Heung-min:RW:91,Cho Gue-sung:ST:80
+ng|Nigeria|2014|Enyeama:GK:85,Balogun:CB:80,Omeruo:CB:78,Ebue:RB:80,Mikel:DM:84,Ogu:CM:78,Musa:AM:82,Onyeka:DM:78,Odemwingie:RW:82,Ighalo:ST:80,Emenike:ST:82
+ci|Ivory Coast|2015|Barry:GK:76,Kolo Toure:CB:78,Bailly:CB:82,Aurier:RB:79,Die:RB:76,Zokora:DM:77,Serey Die:DM:76,Max Gradel:LW:82,Gervinho:LW:82,Drogba:ST:88,Kalou:RW:78,Bony:ST:80
+mx|Mexico|2022|Ochoa:GK:82,Montes:CB:82,Araujo:CB:81,Gallardo:LB:78,Jorge Sanchez:RB:77,Luis Chavez:DM:81,Edson Alvarez:DM:84,Herrera:CM:78,Vega:RW:80,Lozano:LW:82,Jimenez:ST:82
+hr|Croatia|2022|Livakovic:GK:86,Gvardiol:CB:84,Erlic:CB:80,Sutalo:CB:78,Juranovic:RB:78,Stankovic:LB:78,Modric:DM:91,Kovacic:CM:86,Brozovic:CM:84,Perisic:LW:86,Pasalic:RW:80,Kramaric:ST:82,Majer:CM:79
+be|Belgium|2014|Courtois:GK:85,Kompany:CB:86,Vermaelen:CB:82,Vertonghen:CB:84,Meunier:RB:77,Defour:DM:78,Witsel:DM:84,De Bruyne:AM:90,Hazard:LW:90,Mirallas:RW:80,Lukaku:ST:84,Origi:ST:79`;
 const DB=RAW.split('\n').map(l=>{const[c,n,y,p]=l.split('|');return{c,n,y,pl:p.split(',').map(s=>{const[a,b,o]=s.split(':');return{n:a,p:b,o:+o,id:a+c+y,c,y}})}});
 const RAWC=`RMA|Real Madrid|2002|Casillas:GK:84,Hierro:CB:86,Helguera:CB:78,Roberto Carlos:LB:89,Salgado:RB:80,Makelele:DM:86,McManaman:CM:78,Figo:RW:91,Zidane:AM:95,Solari:LM:76,Raul:ST:90,Morientes:ST:82
 BAR|Barcelona|2011|Valdes:GK:84,Pique:CB:87,Puyol:CB:88,Abidal:LB:84,Alves:RB:87,Busquets:DM:88,Xavi:CM:92,Iniesta:CM:93,Fabregas:AM:85,Messi:RW:98,Villa:LW:87,Pedro:LW:82
@@ -217,9 +279,22 @@ PSG|PSG|2025|Donnarumma:GK:89,Marquinhos:CB:87,Pacho:CB:82,Nuno Mendes:LB:86,Hak
 ATM|Atletico|2014|Courtois:GK:88,Miranda:CB:84,Godin:CB:86,Filipe Luis:LB:84,Juanfran:RB:80,Gabi:DM:84,Tiago:CM:80,Koke:CM:82,Arda Turan:AM:83,Raul Garcia:RM:78,Diego Costa:ST:88,Villa:ST:84
 POR|Porto|2004|Vitor Baia:GK:82,Ricardo Carvalho:CB:84,Jorge Costa:CB:78,Nuno Valente:LB:76,Paulo Ferreira:RB:78,Costinha:DM:78,Maniche:CM:80,Deco:AM:88,Alenichev:LM:76,Carlos Alberto:RW:76,Derlei:ST:76
 AJX|Ajax|1995|Van der Sar:GK:86,F. de Boer:CB:84,Blind:LB:82,Reiziger:RB:76,Rijkaard:CM:85,Davids:DM:84,Seedorf:CM:82,Litmanen:AM:86,Overmars:LW:86,Finidi:RW:80,Kluivert:ST:82
-DOR|Dortmund|2013|Weidenfeller:GK:80,Hummels:CB:86,Subotic:CB:80,Schmelzer:LB:76,Piszczek:RB:80,Bender:DM:78,Gundogan:CM:84,Gotze:AM:86,Reus:LW:88,Blaszczykowski:RM:80,Lewandowski:ST:90`;
+DOR|Dortmund|2013|Weidenfeller:GK:80,Hummels:CB:86,Subotic:CB:80,Schmelzer:LB:76,Piszczek:RB:80,Bender:DM:78,Gundogan:CM:84,Gotze:AM:86,Reus:LW:88,Blaszczykowski:RM:80,Lewandowski:ST:90
+BAR|Barcelona|2009|Valdes:GK:85,Puyol:CB:90,Pique:CB:88,Abidal:LB:85,Alves:RB:88,Busquets:DM:89,Xavi:CM:94,Iniesta:CM:94,Yaya Toure:DM:85,Messi:RW:96,Henry:LW:90,Eto'o:ST:88
+RMA|Real Madrid|2017|Navas:GK:84,Ramos:CB:90,Varane:CB:88,Carvajal:RB:86,Marcelo:LB:88,Casemiro:DM:87,Kroos:CM:90,Modric:CM:90,Isco:AM:86,Cristiano Ronaldo:LW:96,Benzema:ST:88,Bale:RW:88
+MUN|Man United|2008|Van der Sar:GK:87,Vidic:CB:88,Ferdinand:CB:88,Evra:LB:86,Neville:RB:82,Carrick:CM:85,Scholes:CM:88,Anderson:CM:78,Cristiano Ronaldo:RW:95,Rooney:ST:89,Tevez:ST:85,Giggs:LW:87
+CHE|Chelsea|2005|Cech:GK:88,Terry:CB:90,Carvalho:CB:86,Ferreira:RB:80,Gallas:CB:84,Mikel:DM:82,Lampard:CM:90,Essien:CM:86,Joe Cole:LW:85,Drogba:ST:89,Crespo:ST:85,Robben:RW:86
+LIV|Liverpool|2005|Dudek:GK:82,Carraher:CB:85,Hyypia:CB:84,Riise:LB:80,Finnan:RB:80,Alonso:DM:88,Gerrard:CM:90,Kewell:LW:82,Garcia:RW:82,Morientes:ST:85,Baros:ST:80
+BAY|Bayern|2020|Neuer:GK:93,Pavard:CB:84,Alaba:CB:86,Hernandez:LB:84,Mazraoui:RB:82,Kimmich:DM:90,Goretzka:CM:86,Muller:AM:88,Sane:LW:85,Gnabry:RW:86,Lewandowski:ST:93,Thiago:CM:88
+MCI|Man City|2024|Ederson:GK:89,Dias:CB:90,Stones:CB:87,Gvardiol:LB:86,Walker:RB:85,Rodri:DM:93,De Bruyne:CM:93,Foden:AM:89,Bernardo Silva:RW:88,Doku:LW:85,Haaland:ST:93,Kovacic:CM:84
+PSG|PSG|2015|Sirigu:GK:83,Silva:CB:89,Marquinhos:CB:86,Maxwell:LB:82,Van der Wiel:RB:80,Matuidi:CM:86,Verratti:CM:88,Ibrahimovic:ST:91,Cavani:ST:88,Neymar:LW:92,Di Maria:RW:86,Pastore:AM:85
+ARS|Arsenal|2024|Raya:GK:84,Saliba:CB:87,Gabriel:CB:86,Zinchenko:LB:82,White:RB:83,Rice:DM:89,Partey:CM:84,Odegaard:AM:90,Saka:RW:90,Martinelli:LW:84,Havertz:AM:84,Sterling:LW:82
+JUV|Juventus|2020|Szczesny:GK:85,Bonucci:CB:88,Chiellini:CB:88,Danilo:RB:82,Alex Sandro:LB:86,Bentancur:CM:83,Pjanic:CM:87,Rabiot:CM:85,Dybala:AM:88,Cristiano Ronaldo:LW:94,Morata:ST:84,Kulusevski:RW:82
+DOR|Dortmund|2024|Kobel:GK:84,Sule:CB:83,Bensebaini:LB:81,Ryerson:RB:80,Emre Can:DM:84,Sabitzer:CM:84,Brandt:AM:86,Adeyemi:RW:84,Gittens:LW:78,Guirassy:ST:86,Malen:ST:82
+ATM|Atletico|2020|Oblak:GK:89,Gimenez:CB:86,Savic:CB:84,Hermoso:LB:82,Llorente:RB:82,Koke:CM:84,Saul:CM:82,Griezmann:ST:89,Luis Suarez:ST:88,Joao Felix:AM:84,Correa:RW:82
+AJX|Ajax|2019|Onana:GK:82,de Ligt:CB:87,Blind:CB:84,Mazraoui:RB:82,Dolberg:LB:78,Frenkie de Jong:DM:87,Van de Beek:CM:85,Ziyech:AM:88,Neres:LW:83,Promes:RW:84,Tadic:AM:86,Huntelaar:ST:80`;
 RAWC.split('\n').forEach(l=>{const[c,n,y,p]=l.split('|');DB.push({c,n,y,k:1,pl:p.split(',').map(s=>{const[a,b,o]=s.split(':');return{n:a,p:b,o:+o,id:a+c+y,c,y}})})});
-const CH=new Set('br|2002,fr|1998,es|2010,de|2014,ar|2022,it|2006,br|1958,br|1970,gb|1966,de|1974,ar|1986,it|1982,nl|1988,dk|1992,pt|2016,es|2024,RMA|2002,BAR|2011,MUN|1999,LIV|2019,MIL|2007,INT|2010,BAY|2013,CHE|2012,JUV|1996,ARS|2004,MCI|2023,PSG|2025,ATM|2014,POR|2004,AJX|1995'.split(','));
+const CH=new Set('br|2002,fr|1998,es|2010,de|2014,ar|2022,it|2006,br|1958,br|1970,gb|1966,de|1974,ar|1986,it|1982,nl|1988,dk|1992,pt|2016,es|2024,br|1994,fr|2000,es|2008,it|1990,de|1990,RMA|2002,RMA|2017,BAR|2011,BAR|2009,MUN|1999,MUN|2008,LIV|2019,LIV|2005,MIL|2007,INT|2010,BAY|2013,BAY|2020,CHE|2012,CHE|2005,JUV|1996,ARS|2004,MCI|2023,PSG|2025,ATM|2014,POR|2004,AJX|1995'.split(','));
 const MD={ALL:['CLASSIC','⚽','National + Club, all teams'],N:['NATIONAL','🌍','Country squads from every era'],C:['CLUB','🏟️','Iconic club squads'],A:['AUCTION','🔨','Set a budget and bid for players']};
 const inMode=(s,m)=>m=='ALL'||(m=='N'&&!s.k)||(m=='C'&&!!s.k)||m=='A';
 const pool=m=>DB.filter(s=>inMode(s,m||st.mode));
@@ -244,11 +319,16 @@ function mini(f,s){return `<div class="relative mt-3 h-24 rounded-xl border ${s?
 
 const sndOn=()=>{try{return localStorage.getItem('dd_snd')!=='0'}catch(e){return true}};
 function tsnd(){try{localStorage.setItem('dd_snd',sndOn()?'0':'1')}catch(e){}home()}
-const hv=()=>{};
+const hv=p=>{try{if(!sndOn()||!p||!navigator.vibrate)return;navigator.vibrate(Array.isArray(p)?p:p)}catch(e){}};
 const SFX={bid:[[660,.06]],pick:[[523,.07],[784,.12]],sold:[[110,.14,'square'],[880,.2]]};
 function sfx(k){try{if(!sndOn())return;const C=sfx.c||(sfx.c=new(window.AudioContext||window.webkitAudioContext)());let t=C.currentTime;(SFX[k]||[]).forEach(([f,d,ty])=>{const o=C.createOscillator(),v=C.createGain();o.type=ty||'sine';o.frequency.value=f;v.gain.setValueAtTime(.08,t);v.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(v);v.connect(C.destination);o.start(t);o.stop(t+d);t+=d*.8})}catch(e){}}
 document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('button'))hv(8)},true);
-function toast(m){const d=document.createElement('div');d.textContent=m;d.style.cssText='position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:99;background:#facc15;color:#000;font:800 18px "Barlow Condensed",sans-serif;padding:8px 18px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.5)';document.body.appendChild(d);setTimeout(()=>d.remove(),1800)}
+const tiltIn=e=>{const r=e.currentTarget.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;e.currentTarget.style.transform=`perspective(700px) rotateX(${(-y*9).toFixed(1)}deg) rotateY(${(x*9).toFixed(1)}deg) translateY(-5px)`};
+const tiltOut=e=>{e.currentTarget.style.transform=''};
+function burst(el,c,n=12){try{if(!el)return;const r=el.getBoundingClientRect();for(let i=0;i<n;i++){const s=document.createElement('i');s.className='spark';s.style.cssText=`left:${r.left+r.width/2}px;top:${r.top+r.height/2}px;color:${c};background:${c};--a:${i*360/n}deg;--d:${38+Math.random()*70}px`;document.body.appendChild(s);setTimeout(()=>s.remove(),750)}}catch(e){}}
+document.addEventListener('pointermove',e=>{const b=e.target&&e.target.closest&&e.target.closest('button');if(!b)return;const r=b.getBoundingClientRect();b.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');b.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%')},true);
+document.addEventListener('pointerdown',e=>{const b=e.target&&e.target.closest&&e.target.closest('button');if(!b||b.disabled)return;const r=b.getBoundingClientRect(),d=Math.max(r.width,r.height),s=document.createElement('i');s.className='ripple';s.style.cssText=`left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px;width:${d}px;height:${d}px`;b.appendChild(s);setTimeout(()=>s.remove(),580)},true);
+function toast(m){const d=document.createElement('div');d.className='toast';d.textContent=m;d.style.cssText='position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:99;background:#facc15;color:#000;font:800 18px "Barlow Condensed",sans-serif;padding:8px 18px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.5)';document.body.appendChild(d);setTimeout(()=>d.remove(),1800)}
 function share(){const msg='⚽ DRAFT DUEL\n\n'+[0,1].map(q=>g.n[q]+' ('+g.f[q]+') - '+tot(q)+'\n'+SL(q).map((sl,k)=>g.L[q][k]?sl+' '+g.L[q][k].n+' '+g.L[q][k].o:'').filter(Boolean).join('\n')).join('\n\n');
  const done=()=>toast('Result copied ✓');
  const fb=()=>{try{const t=document.createElement('textarea');t.value=msg;t.style.cssText='position:fixed;opacity:0';document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();done()}catch(e){toast('Copy failed')}};
@@ -278,11 +358,12 @@ async function findFace(x){
  const ps=Object.values((j.query||{}).pages||{}).sort((a,b)=>a.index-b.index);
  const m=ps.find(p=>norm(p.title).includes(sn));
  return m&&m.thumbnail?m.thumbnail.source:null}
-function faceLoad(x){return;const k=fk(x);
- const put=u=>document.querySelectorAll('img.hx-face').forEach(im=>{if(im.dataset.k!==k)return;im.onload=()=>{im.style.display='block';const q=im.parentNode.querySelector('.hx-sil');if(q)q.style.display='none'};im.src=u});
- const nk=nkey(x);if(FC[nk]){put(FC[nk]);return}
- if(k in FC){if(FC[k])put(FC[k]);return}
- findFace(x).then(u=>{FC[k]=u||'';try{localStorage.setItem('dd_faces',JSON.stringify(FC))}catch(e){}if(u)put(u)}).catch(()=>{})}
+function faceLoad(x){const k=fk(x);
+  const put=u=>document.querySelectorAll('img.hx-face').forEach(im=>{if(im.dataset.k!==k)return;im.onload=()=>{im.style.display='block';const q=im.parentNode.querySelector('.hx-sil');if(q)q.style.display='none'};im.src=u});
+  const nk=nkey(x);if(FC[nk]){put(FC[nk]);return}
+  if(k in FC){if(FC[k])put(FC[k]);return}
+  if(!navigator.onLine)return;
+  findFace(x).then(u=>{FC[k]=u||'';try{localStorage.setItem('dd_faces',JSON.stringify(FC))}catch(e){}if(u)put(u)}).catch(()=>{})}
 
 const hx=c=>[1,3,5].map(i=>parseInt(c.slice(i,i+2),16));
 const mixc=(a,b,t)=>{const p=hx(a),q=hx(b);return '#'+p.map((v,i)=>Math.round(v+(q[i]-v)*t).toString(16).padStart(2,'0')).join('')};
@@ -399,7 +480,7 @@ function aucSetup(){
  </div></div>`)
 }
 function aucGo(){
- g.B=[st.ab,st.ab];g.N=st.an;g.au=1;g.cnt=[0,0];g.un=new Set();g.sp=[0,0];g.lot=0;g.sv=0;
+  g.B=[st.ab,st.ab];g.N=st.an;g.au=1;g.cnt=[0,0];g.un=new Set();g.sp=[0,0];g.lot=0;g.sv=0;g.pr={};g.dry=0;
  g.AP=DB.flatMap(q=>q.pl.map(x=>({...x,tn:q.n,k:q.k})));
  nextLot()
 }
@@ -425,14 +506,14 @@ function nextLot(n){
  aucView()
 }
 function bid(v){const a=g.a,t=a.turn;if(v>maxBid(t)||(a.b&&v<=a.b)||v<base(a.x.o))return;
- a.b=v;a.lead=t;a.ps=0;a.h.push([t,v]);hv(14);sfx('bid');
+ a.b=v;a.lead=t;a.ps=0;a.h.push([t,v]);hv(14);sfx('bid');burst($('a').querySelector('.bidpop'),K[t],8);
  if(can(t^1)){a.turn=t^1;aucView()}else sold()}
 function pass(){const a=g.a,t=a.turn;if(a.lead>=0)return sold();
  if(a.ps||!can(t^1))return unsold();a.h.push([t,-1]);a.ps=1;a.turn=t^1;aucView()}
-function sold(){const a=g.a,t=a.lead,x=a.x;g.B[t]-=a.b;g.sp[t]+=a.b;g.cnt[t]++;(g.pr=g.pr||{})[x.id]=a.b;g.L[t][slotFor(t,x.p)]=x;g.used.add(x.id);g.un.add(x.n.toLowerCase());hv([20,40,30]);sfx('sold');soldView(t,x,a.b)}
+function sold(){const a=g.a,t=a.lead,x=a.x;g.B[t]-=a.b;g.sp[t]+=a.b;g.cnt[t]++;(g.pr=g.pr||{})[x.id]=a.b;g.L[t][slotFor(t,x.p)]=x;g.used.add(x.id);g.un.add(x.n.toLowerCase());hv([20,40,30]);sfx('sold');soldView(t,x,a.b);burst(document.querySelector('.soldstamp'),t<0?'#94a3b8':K[t],18)}
 function unsold(){soldView(-1,g.a.x,0)}
 function aucExit(){let y=true;try{y=confirm('Leave the auction and return home?')}catch(e){}if(y)home()}
-const lotCard=x=>{const c=tierC(x.o),tn=tierN(x.o);return `<div class="hx-card ${x.o>=92?'icn':''}" style="--c1:${c[0]};--c2:${c[1]};--c3:${c[2]};--tx:${c[3]};margin:0 auto"><div class="hx-cin"><div class="hx-rt"><b>${x.o}</b><small>${x.p}</small></div><div class="hx-fg">${fl(x.c)}</div><div class="hx-nm2" style="font-size:${x.n.length>13?17:x.n.length>9?20:23}px;overflow-wrap:anywhere">${ev(x.n)}</div><div class="lcs">${stats(x).map(z=>`<span><small>${z[0]}</small><b>${z[1]}</b></span>`).join('')}</div><div class="hx-fm">${tn[0]}</div></div></div>`};
+const lotCard=x=>{const c=tierC(x.o),tn=tierN(x.o);return `<div class="hx-card tilt ${x.o>=92?'icn':''}" onmousemove="tiltIn(event)" onmouseleave="tiltOut(event)" style="--c1:${c[0]};--c2:${c[1]};--c3:${c[2]};--tx:${c[3]};margin:0 auto"><div class="hx-cin"><img class="hx-face" data-k="${fk(x)}" alt="" style="display:none"><div class="hx-rt"><b>${x.o}</b><small>${x.p}</small></div><div class="hx-fg">${fl(x.c)}</div><div class="hx-nm2" style="font-size:${x.n.length>13?17:x.n.length>9?20:23}px;overflow-wrap:anywhere">${ev(x.n)}</div><div class="lcs">${stats(x).map(z=>`<span><small>${z[0]}</small><b>${z[1]}</b></span>`).join('')}</div><div class="hx-fm">${tn[0]}</div></div></div>`};
 const budBar=t=>[0,1].map(q=>{const a=g.a,ld=!!a&&!g.sv&&a.lead==q;return `<div class="flex-1 min-w-0 rounded-xl border-2 px-3 py-2 ${q==t?'bg-slate-800':'opacity-60 border-slate-700 bg-slate-900/80'}" style="${q==t?`border-color:${K[q]};box-shadow:0 0 15px ${K[q]}44`:''}"><div class="flex items-center justify-between gap-1"><div class="text-lg font-bold text-slate-200 leading-5 truncate">${ev(g.n[q])}</div>${ld?`<span class="shrink-0 rounded px-1.5 text-[11px] font-black leading-4 text-black flex items-center gap-1" style="background:${K[q]}">TOP BID ${a.b}M</span>`:''}</div><div class="flex justify-between items-end"><b class="text-3xl font-black flex items-center gap-1.5" style="color:${K[q]}"><span class="opacity-70">${ic('B',22)}</span>${g.B[q]}M</b><small class="text-sm text-slate-400 font-bold flex items-center gap-1">${ic('U',15)}${g.cnt[q]}/${g.N}</small></div></div>`}).join('');
 function aucView(){
  scrollTo(0,0);
@@ -445,22 +526,23 @@ function aucView(){
    <div class="flex-1 min-w-0">
     <span class="tierchip" style="color:${tn[1]};border-color:${tn[1]}66;background:${tn[1]}1a">${tn[0]} LOT</span>
     <div class="text-xs font-black tracking-widest text-slate-400">${a.b?'CURRENT BID':'BASE PRICE'}</div>
-    <div class="text-6xl font-black leading-none text-yellow-400 drop-shadow-[0_0_14px_rgba(250,204,21,.5)]">${cur}<span class="text-3xl">M</span></div>
+     <div class="bidpop text-6xl font-black leading-none text-yellow-400 drop-shadow-[0_0_14px_rgba(250,204,21,.5)]">${cur}<span class="text-3xl">M</span></div>
     <div class="text-lg font-bold text-slate-300 mt-1 truncate">${fl(x.c)} ${ev(x.tn)} • ${x.y}</div>
     <div class="text-base font-black tracking-wide mt-1 truncate" style="color:${a.lead>=0?K[a.lead]:'#64748b'}">${a.lead>=0?'LEADING: '+ev(g.n[a.lead].toUpperCase()):'NO BIDS YET'}</div>
     <div class="text-sm font-bold tracking-wide text-slate-400 mt-2">BASE ${bs}M • MIN NEXT ${a.b?cur+1:cur}M</div>
    </div>
   </div>
-  <div class="mt-4 rounded-xl border border-slate-700/70 bg-slate-900/60 px-3 py-2">
-   <div class="text-[11px] font-black tracking-widest text-slate-500 mb-1">BID HISTORY</div>
-   <div class="flex flex-wrap items-center gap-1.5">${a.h.length?a.h.map(([q,v])=>`<span class="hchip" style="border-color:${K[q]};color:${K[q]}">${ev(short(g.n[q]))} <b>${v<0?'PASS':v+'M'}</b></span>`).join('<span class="text-slate-600 font-black">›</span>'):'<span class="text-slate-500 text-base font-semibold">No bids yet</span>'}</div>
-  </div>
+   <div class="mt-4 rounded-xl border border-slate-700/70 bg-slate-900/60 px-3 py-2">
+    <div class="text-[11px] font-black tracking-widest text-slate-500 mb-1">BID HISTORY ${a.h.length?`<span class="text-slate-600">• ${a.h.length} ENTRIES</span>`:''}</div>
+    <div id="bh" class="bidhist flex items-center gap-1.5">${a.h.length?a.h.map(([q,v])=>`<span class="hchip" style="border-color:${K[q]};color:${K[q]}">${ev(short(g.n[q]))} <b>${v<0?'PASS':v+'M'}</b></span>`).join('<span class="hsep font-black">›</span>'):'<span class="text-slate-500 text-base font-semibold">No bids yet</span>'}</div>
+   </div>
   <div class="h-1.5 rounded bg-slate-800 overflow-hidden mt-4 ${SET.tm?'':'hidden'}"><div id="tbar" class="h-full" style="width:100%;background:${k}"></div></div>
   <div class="text-center text-2xl font-black italic tracking-wide mt-3 mb-3" style="color:${k};text-shadow:0 0 10px ${k}55">${ev(g.n[t].toUpperCase())} TO BID <span class="text-base text-slate-400">• MAX ${mb}M</span></div>
   <div class="grid grid-cols-4 gap-2" style="--k:${k}">${ops.map(i=>{const m=cur+i,d=m>mb;return `<div class="bbw ${d?'off':''}"><button class="bb" ${d?'disabled':''} onclick="bid(${m})"><span><b>${i?'+'+i:'OPEN'}</b><em>${m}M</em></span></button></div>`}).join('')}</div>
   <div class="pbw mt-3"><button class="pbt" onclick="pass()"><span><b>${a.lead>=0?'PASS':'PASS / SKIP'}</b><em>${a.lead>=0?ev(short(g.n[a.lead]))+' wins it for '+a.b+'M':'Skip this player'}</em></span></button></div>
- </div>`);
- runTimer()
+  </div>`);
+  const bh=$('bh');if(bh)bh.scrollLeft=bh.scrollWidth;
+  runTimer()
 }
 function soldView(t,x,pr){
  g.sv=1;scrollTo(0,0);const fin=full(0)&&full(1);setTimeout(()=>faceLoad(x),0);
@@ -517,7 +599,7 @@ function teams(m){
  app(`<div class="px-4 pt-8 pb-10">
   <div class="flex items-center justify-between mb-4"><div class="w-10"></div><div class="text-3xl font-extrabold italic text-center leading-none tracking-wide">${MD[m][0]}<br><span class="text-xl text-slate-400">${L.length} TEAMS</span></div><button class="w-10 h-10 rounded-xl border border-slate-600 bg-slate-800/50 text-2xl flex items-center justify-center active:bg-slate-700" onclick="home()">${ic('Q',20)}</button></div>
   <div class="flex gap-1.5 mb-4 overflow-x-auto">${Object.keys(MD).filter(k=>k!='A').map(k=>`<button onclick="teams('${k}')" class="shrink-0 rounded-lg border px-3 py-1.5 text-base font-bold italic transition-all ${k==m?'border-blue-400 bg-blue-500/20 text-blue-300':'border-slate-700 bg-slate-800 text-slate-400'}">${MD[k][0]}</button>`).join('')}</div>
-  ${L.map(s=>{const mx=Math.max(...s.pl.map(q=>q.o));return `<div class="flex items-center gap-3 rounded-2xl glass-panel px-4 py-2 mb-2"><div class="w-16 text-center text-3xl">${fl(s.c)}</div><div class="flex-1 min-w-0"><div class="text-2xl font-black italic leading-none truncate">${s.n}</div><div class="text-sm font-bold text-slate-400">${s.y}${CH.has(s.c+'|'+s.y)?' • CHAMPION':''}</div></div><div class="text-right"><div class="text-3xl font-black text-teal-300 leading-none">${mx}</div><div class="text-[10px] font-bold text-slate-500 tracking-widest">TOP OVR</div></div></div>`}).join('')}
+  ${L.map((s,i)=>{const mx=Math.max(...s.pl.map(q=>q.o));return `<div class="teamrow flex items-center gap-3 rounded-2xl glass-panel px-4 py-2 mb-2" style="animation-delay:${Math.min(i*22,330)}ms"><div class="w-16 text-center text-3xl">${fl(s.c)}</div><div class="flex-1 min-w-0"><div class="text-2xl font-black italic leading-none truncate">${s.n}</div><div class="text-sm font-bold text-slate-400">${s.y}${CH.has(s.c+'|'+s.y)?' • CHAMPION':''}</div></div><div class="text-right"><div class="text-3xl font-black text-teal-300 leading-none">${mx}</div><div class="text-[10px] font-bold text-slate-500 tracking-widest">TOP OVR</div></div></div>`}).join('')}
  </div>`)
 }
 function fpage(){
@@ -626,9 +708,9 @@ function spin(re){
      else if (maxOvr >= 85) weight = 5; // Good teams are moderate
      for(let i=0;i<weight;i++) weighted.push(s);
  });
- const res = weighted[Math.floor(Math.random() * weighted.length)];
- 
- const H=76,N=24,D=3200,rt=$('rt'),ry=$('ry');
+  const res = weighted[Math.floor(Math.random() * weighted.length)];
+  if(!res){g.busy=false;toast('Koi team nahi bachi');render();return}
+  const H=76,N=24,D=3200,rt=$('rt'),ry=$('ry');
  let tH='',yH='';
  for(let i=0;i<N;i++){
      const s=eligible[Math.floor(Math.random()*eligible.length)];
@@ -653,7 +735,7 @@ function spin(re){
   rt.style.filter=ry.style.filter='none';
   if(rt.parentElement)rt.parentElement.style.boxShadow='0 0 26px #ffd60a';
   if(ry.parentElement)ry.parentElement.style.boxShadow='0 0 26px #ffd60a';
-  sfx('bid');hv([15,30,15]);setTimeout(()=>{g.cur=pack(res);g.busy=false;render()},520);
+  sfx('bid');hv([15,30,15]);setTimeout(()=>{g.cur=pack(res);g.busy=false;render();burst(document.querySelector('.pitch'),'#facc15',16)},520);
  };
  requestAnimationFrame(step);
 }
@@ -669,7 +751,7 @@ function pick(i){
    <p class="text-2xl font-bold text-slate-400 tracking-wider">${g.n[p].toUpperCase()} PICKED</p>
    <div class="mt-4 rounded-3xl glass-panel p-6 shadow-[0_0_40px_rgba(255,255,255,0.05)] border-t-4" style="border-top-color:${K[p]}">
     <div class="text-6xl mb-2 drop-shadow-lg">${fl(x.c)}</div>
-    <div class="text-4xl font-black italic tracking-wide" style="color:${K[p]};text-shadow:0 0 20px ${K[p]}66">${x.n.toUpperCase()}</div>
+     <div class="pop text-4xl font-black italic tracking-wide" style="color:${K[p]};text-shadow:0 0 20px ${K[p]}66">${x.n.toUpperCase()}</div>
     <div class="mt-3 inline-block bg-slate-900 rounded-xl px-4 py-1 border border-slate-700">
      <span class="text-4xl font-black text-white">${x.o}</span> <span class="text-xl font-bold text-slate-400">OVR</span>
     </div>
@@ -679,8 +761,9 @@ function pick(i){
    <p class="text-2xl font-bold text-slate-400 tracking-wider mb-2">PASS THE PHONE TO</p>
    <div class="text-6xl font-black italic tracking-tighter drop-shadow-lg" style="color:${K[g.t]};text-shadow:0 0 30px ${K[g.t]}88">${g.n[g.t].toUpperCase()}</div>
   </div>
-  <button class="gbtn w-full py-5 text-4xl tracking-widest" onclick="render()">READY</button>
- </div>`);
+   <button class="gbtn w-full py-5 text-4xl tracking-widest" onclick="render()">READY</button>
+  </div>`);
+  burst(document.querySelector('.pop'),K[p],16);
 }
 
 function result(){
@@ -688,7 +771,7 @@ function result(){
  app(`<div class="px-4 pt-8 pb-10">
   <div class="text-center">
    <div class="text-5xl font-black italic tracking-tighter drop-shadow-lg">FULL TIME</div>
-   <div class="my-4 text-4xl font-black italic ${w<0?'text-slate-300':'text-yellow-400 drop-shadow-[0_0_20px_rgba(250,204,21,0.5)]'}">${w<0?'DRAW':g.n[w].toUpperCase()+' WINS!'}</div>
+    <div class="pop ${w<0?'':'glow'} my-4 text-4xl font-black italic ${w<0?'text-slate-300':'text-yellow-400 drop-shadow-[0_0_20px_rgba(250,204,21,0.5)]'}">${w<0?'DRAW':g.n[w].toUpperCase()+' WINS!'}</div>
   </div>
   <div class="flex gap-3 mb-6">${sbar(w<0?-1:w)}</div>
   ${g.au?`<div class="flex gap-3 mb-6">${[0,1].map(q=>`<div class="flex-1 rounded-xl glass-panel py-2 text-center"><div class="text-xs font-black tracking-widest text-slate-400">SPENT / LEFT</div><div class="text-2xl font-black" style="color:${K[q]}">${g.sp[q]}M / ${g.B[q]}M</div></div>`).join('')}</div>`:''}
@@ -697,8 +780,9 @@ function result(){
   </div>
   ${g.au?auGrid(v):pitch(v)}
   <button class="bbtn mt-6 w-full py-3 text-2xl tracking-wider" onclick="share()">COPY RESULT</button>
-  <button class="gbtn mt-4 w-full py-4 text-4xl tracking-widest" onclick="home()">REMATCH</button>
- </div>`);
+   <button class="gbtn mt-4 w-full py-4 text-4xl tracking-widest" onclick="home()">REMATCH</button>
+  </div>`);
+  if(w>=0&&!g.won){g.won=1;burst(document.querySelector('.pop'),K[w],20)}
 }
 
 ['CB','LB','RB'].forEach(k=>AC[k].push('DF'));['DM','CM','AM','LM','RM'].forEach(k=>AC[k].push('MF'));['LW','RW','ST'].forEach(k=>AC[k].push('FW'));

@@ -1,0 +1,16 @@
+{
+  "appId": "com.draftduel.app",
+  "appName": "Draft Duel",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "backgroundColor": "#020617",
+      "showSpinner": false
+    }
+  }
+}
