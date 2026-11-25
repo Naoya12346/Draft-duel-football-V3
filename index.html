@@ -587,10 +587,6 @@ function setSnd(v){try{localStorage.setItem('dd_snd',v?'1':'0')}catch(e){}settin
 function setTm(v){SET.tm=v;svSet();settings()}
 function setBg(v){SET.bg=v;svSet();settings()}
 function resetP(){askC('Matches aur level reset karne hain?',()=>{try{localStorage.removeItem('dd_stats')}catch(e){}home()})}
-function admPick(){const i=document.createElement('input');i.type='file';i.accept='image/png,image/*';i.multiple=false;
- i.onchange=()=>{const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const d=e.target.result;try{localStorage.setItem('dd_admin_card',d);toast('Card PNG uploaded ✓')}catch(err){toast('Storage full ho gaya')}};r.readAsDataURL(f)};i.click()}
-function admPickMulti(){const i=document.createElement('input');i.type='file';i.accept='image/png,image/*';i.multiple=true;
- i.onchange=async()=>{const fs=[...i.files];if(!fs.length)return;let ok=0;for(const f of fs){try{const d=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=rej;r.readAsDataURL(f)});const k='dd_card_'+norm(f.name.replace(/\.[^.]+$/,'')).replace(/[^a-z0-9]/g,'');localStorage.setItem(k,d);ok++}catch(e){}}toast(ok+' card PNG upload ho gayi')};i.click()}
 function settings(){scrollTo(0,0);navPush('settings');
  const row=(t,d,b)=>`<div class="rounded-2xl glass-panel p-4 mb-3"><div class="text-2xl font-black italic leading-none">${t}</div><div class="text-base text-slate-400 font-semibold mb-3">${d}</div>${b}</div>`;
  const seg=(a,cur,fn)=>`<div class="flex gap-2">${a.map(([l,v])=>`<button onclick="${fn}(${v})" class="flex-1 rounded-lg border py-2 text-xl font-bold italic ${cur==v?'border-yellow-400 bg-yellow-400/15 text-yellow-300':'border-slate-700 bg-slate-800 text-slate-400'}">${l}</button>`).join('')}</div>`;
@@ -599,7 +595,6 @@ function settings(){scrollTo(0,0);navPush('settings');
  ${row('Auction timer','Auto-pass when the clock runs out',seg([['OFF',0],['15s',15],['30s',30],['60s',60]],SET.tm,'setTm'))}
  ${row('Bid buttons','Size of each bid step',seg([['SMALL',0],['BIG',1]],SET.bg,'setBg'))}
  ${row('Animations','Auto = phone ki setting. LITE halka aur smooth, FULL poori animations',`<div class="flex gap-2">${[['AUTO','auto'],['LITE','lite'],['FULL','full']].map(([l,v])=>`<button onclick="setMo('${v}')" class="flex-1 rounded-lg border py-2 text-xl font-bold italic ${MO==v?'border-yellow-400 bg-yellow-400/15 text-yellow-300':'border-slate-700 bg-slate-800 text-slate-400'}">${l}</button>`).join('')}</div>`)}
- ${row('Admin - Card PNG Upload','Upload player/card PNG photos from your device files','<div class="flex gap-2"><button class="gbtn flex-1 py-2 text-lg tracking-wide" onclick="admPick()">UPLOAD PNG</button><button class="bbtn flex-1 py-2 text-lg tracking-wide" onclick="impFaces()">BULK PHOTOS</button></div>')}
  ${row('Admin panel','Add cards, set lots, add players','<button class="abt w-full py-2 text-xl" onclick="admin()">OPEN</button>')}
  ${row('Progress','Resets matches played and level','<button class="abt red w-full py-2 text-xl" onclick="resetP()">RESET</button>')}
  </div>`)}
