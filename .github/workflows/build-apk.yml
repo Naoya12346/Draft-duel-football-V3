@@ -1,0 +1,97 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install app dependencies
+        working-directory: android-app
+        run: npm install
+
+      - name: Sync web assets
+        working-directory: android-app
+        run: node sync.js
+
+      - name: Init Capacitor Android if missing
+        working-directory: android-app
+        run: |
+          if [ ! -d android ]; then
+            npx cap add android
+          fi
+          npx cap sync android
+
+      - name: Configure Android back handling and permissions
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const p='android-app/android/app/src/main/AndroidManifest.xml';
+          let s=fs.readFileSync(p,'utf8');
+          if(!s.includes('READ_MEDIA_IMAGES')) {
+            s=s.replace('<manifest', '<manifest');
+            s=s.replace(/<application/, '<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />\n    <application');
+          }
+          fs.writeFileSync(p,s);
+          const main='android-app/android/app/src/main/java/com/draftduel/app/MainActivity.java';
+          if(fs.existsSync(main)){
+            let m=fs.readFileSync(main,'utf8');
+            if(!m.includes('OnBackPressedCallback')){
+              m=m.replace(
+                'import com.getcapacitor.BridgeActivity;\n\npublic class MainActivity extends BridgeActivity {}',
+`import android.os.Bundle;
+import androidx.activity.OnBackPressedCallback;
+import com.getcapacitor.BridgeActivity;
+
+public class MainActivity extends BridgeActivity {
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+      @Override
+      public void handleOnBackPressed() {
+        if (getBridge() != null && getBridge().getWebView() != null && getBridge().getWebView().canGoBack()) {
+          getBridge().getWebView().goBack();
+        } else {
+          setEnabled(false);
+          getOnBackPressedDispatcher().onBackPressed();
+        }
+      }
+    });
+  }
+}`
+              );
+              fs.writeFileSync(main,m);
+            }
+          }
+          NODE
+
+      - name: Build APK
+        working-directory: android-app/android
+        run: chmod +x gradlew && ./gradlew assembleDebug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: draft-duel-debug-apk
+          path: android-app/android/app/build/outputs/apk/debug/*.apk

@@ -6,5 +6,13 @@
     "sync": "node sync.js && npx cap sync android",
     "add": "npx cap add android",
     "open": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/app": "^6.0.2",
+    "@capacitor/core": "^6.2.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.0"
   }
 }

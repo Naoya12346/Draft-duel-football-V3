@@ -463,6 +463,19 @@ function burst(el,c,n=12){return;try{if(!el)return;const r=el.getBoundingClientR
 document.addEventListener('pointermove',e=>{const b=e.target&&e.target.closest&&e.target.closest('button');if(!b)return;const r=b.getBoundingClientRect();b.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');b.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%')},true);
 document.addEventListener('pointerdown',e=>{const b=e.target&&e.target.closest&&e.target.closest('button');if(!b||b.disabled)return;const r=b.getBoundingClientRect(),d=Math.max(r.width,r.height),s=document.createElement('i');s.className='ripple';s.style.cssText=`left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px;width:${d}px;height:${d}px`;b.appendChild(s);setTimeout(()=>s.remove(),580)},true);
 function toast(m){const d=document.createElement('div');d.className='toast';d.textContent=m;d.style.cssText='position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:99;background:#facc15;color:#000;font:800 18px "Barlow Condensed",sans-serif;padding:8px 18px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.5)';document.body.appendChild(d);setTimeout(()=>d.remove(),1800)}
+let CURSCR='home';
+function navPush(s){CURSCR=s;try{history.pushState({scr:s},'')}catch(e){}}
+function handleBack(){
+ try{const sh=document.getElementById('sh');if(sh&&sh.style.transform==='none'){tg(0);return}}catch(e){}
+ if(CURSCR==='home'){try{if(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.App){window.Capacitor.Plugins.App.exitApp();return}}catch(e){} return}
+ if(CURSCR==='settings'||CURSCR==='modes'||CURSCR==='teams'||CURSCR==='fpage'||CURSCR==='aucSetup'){home();return}
+ if(CURSCR==='auction'){aucExit();return}
+ if(CURSCR==='match'||CURSCR==='result'){let y=true;try{y=confirm('Leave match and return home?')}catch(e){}if(y)home();return}
+ home();
+}
+window.addEventListener('popstate',()=>{handleBack();try{history.pushState({scr:CURSCR},'')}catch(e){}});
+try{history.replaceState({scr:'home'},'');history.pushState({scr:'home'},'')}catch(e){}
+document.addEventListener('DOMContentLoaded',()=>{try{const A=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.App;if(A&&A.addListener)A.addListener('backButton',()=>handleBack())}catch(e){}});
 function share(){const msg='⚽ DRAFT DUEL\n\n'+[0,1].map(q=>g.n[q]+' ('+g.f[q]+') - '+tot(q)+'\n'+SL(q).map((sl,k)=>g.L[q][k]?sl+' '+g.L[q][k].n+' '+g.L[q][k].o:'').filter(Boolean).join('\n')).join('\n\n');
  const done=()=>toast('Result copied ✓');
  const fb=()=>{try{const t=document.createElement('textarea');t.value=msg;t.style.cssText='position:fixed;opacity:0';document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();done()}catch(e){toast('Copy failed')}};
@@ -574,7 +587,11 @@ function setSnd(v){try{localStorage.setItem('dd_snd',v?'1':'0')}catch(e){}settin
 function setTm(v){SET.tm=v;svSet();settings()}
 function setBg(v){SET.bg=v;svSet();settings()}
 function resetP(){askC('Matches aur level reset karne hain?',()=>{try{localStorage.removeItem('dd_stats')}catch(e){}home()})}
-function settings(){scrollTo(0,0);
+function admPick(){const i=document.createElement('input');i.type='file';i.accept='image/png,image/*';i.multiple=false;
+ i.onchange=()=>{const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const d=e.target.result;try{localStorage.setItem('dd_admin_card',d);toast('Card PNG uploaded ✓')}catch(err){toast('Storage full ho gaya')}};r.readAsDataURL(f)};i.click()}
+function admPickMulti(){const i=document.createElement('input');i.type='file';i.accept='image/png,image/*';i.multiple=true;
+ i.onchange=async()=>{const fs=[...i.files];if(!fs.length)return;let ok=0;for(const f of fs){try{const d=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=rej;r.readAsDataURL(f)});const k='dd_card_'+norm(f.name.replace(/\.[^.]+$/,'')).replace(/[^a-z0-9]/g,'');localStorage.setItem(k,d);ok++}catch(e){}}toast(ok+' card PNG upload ho gayi')};i.click()}
+function settings(){scrollTo(0,0);navPush('settings');
  const row=(t,d,b)=>`<div class="rounded-2xl glass-panel p-4 mb-3"><div class="text-2xl font-black italic leading-none">${t}</div><div class="text-base text-slate-400 font-semibold mb-3">${d}</div>${b}</div>`;
  const seg=(a,cur,fn)=>`<div class="flex gap-2">${a.map(([l,v])=>`<button onclick="${fn}(${v})" class="flex-1 rounded-lg border py-2 text-xl font-bold italic ${cur==v?'border-yellow-400 bg-yellow-400/15 text-yellow-300':'border-slate-700 bg-slate-800 text-slate-400'}">${l}</button>`).join('')}</div>`;
  app(`<div class="px-4 pt-8 pb-10"><div class="flex items-center justify-between mb-5"><div class="w-10"></div><div class="text-3xl font-extrabold italic leading-none text-center">SETTINGS</div><button class="w-10 h-10 rounded-xl border border-slate-600 bg-slate-800/50 text-2xl flex items-center justify-center" onclick="home()">${ic('Q',20)}</button></div>
@@ -582,7 +599,8 @@ function settings(){scrollTo(0,0);
  ${row('Auction timer','Auto-pass when the clock runs out',seg([['OFF',0],['15s',15],['30s',30],['60s',60]],SET.tm,'setTm'))}
  ${row('Bid buttons','Size of each bid step',seg([['SMALL',0],['BIG',1]],SET.bg,'setBg'))}
  ${row('Animations','Auto = phone ki setting. LITE halka aur smooth, FULL poori animations',`<div class="flex gap-2">${[['AUTO','auto'],['LITE','lite'],['FULL','full']].map(([l,v])=>`<button onclick="setMo('${v}')" class="flex-1 rounded-lg border py-2 text-xl font-bold italic ${MO==v?'border-yellow-400 bg-yellow-400/15 text-yellow-300':'border-slate-700 bg-slate-800 text-slate-400'}">${l}</button>`).join('')}</div>`)}
-   ${row('Admin panel','Add cards, set lots, add players','<button class="abt w-full py-2 text-xl" onclick="admin()">OPEN</button>')}
+ ${row('Admin - Card PNG Upload','Upload player/card PNG photos from your device files','<div class="flex gap-2"><button class="gbtn flex-1 py-2 text-lg tracking-wide" onclick="admPick()">UPLOAD PNG</button><button class="bbtn flex-1 py-2 text-lg tracking-wide" onclick="impFaces()">BULK PHOTOS</button></div>')}
+ ${row('Admin panel','Add cards, set lots, add players','<button class="abt w-full py-2 text-xl" onclick="admin()">OPEN</button>')}
  ${row('Progress','Resets matches played and level','<button class="abt red w-full py-2 text-xl" onclick="resetP()">RESET</button>')}
  </div>`)}
 let TMR;function runTimer(){clearInterval(TMR);if(!SET.tm)return;const a=g.a,t0=Date.now(),L=SET.tm*1000;
@@ -598,7 +616,7 @@ const can=t=>{const a=g.a;return canBuy(t,a.x)&&maxBid(t)>=(a.b?a.b+1:base(a.x.o
 function setAB(v){st.ab=Math.max(30,Math.min(1000,v));aucSetup()}
 function setAN(v){st.an=v;aucSetup()}
 function aucSetup(){
- scrollTo(0,0);
+ scrollTo(0,0);navPush('aucSetup');
  app(`<div class="px-4 pt-8 pb-10"><div class="rounded-3xl glass-panel p-5 shadow-[0_0_50px_rgba(14,165,233,0.15)]">
   <div class="flex items-center justify-between mb-5"><div class="w-10"></div><div class="text-3xl font-extrabold italic text-center leading-none tracking-wide">AUCTION<br><span class="text-xl text-slate-400">SETUP</span></div><button class="w-10 h-10 rounded-xl border border-slate-600 bg-slate-800/50 text-2xl flex items-center justify-center" onclick="home()">${ic('Q',20)}</button></div>
   <div class="text-sm font-black tracking-widest text-slate-400 mb-2">BUDGET PER TEAM</div>
@@ -648,7 +666,7 @@ const rareCard=x=>{const c=CM[x.id];return `<div class="rcx pcb pc${c.id}" style
 const lotCard=x=>{if(CM[x.id])return rareCard(x);const c=tierC(x.o),tn=tierX(x);return `<div class="hx-card tilt ${x.o>=92?'icn':''}" onmousemove="tiltIn(event)" onmouseleave="tiltOut(event)" style="--c1:${c[0]};--c2:${c[1]};--c3:${c[2]};--tx:${c[3]};margin:0 auto"><div class="hx-cin"><img class="hx-face" data-k="${fk(x)}" alt="" style="display:none"><div class="hx-rt"><b>${x.o}</b><small>${x.p}</small></div><div class="hx-fg">${fl(x.c)}</div><div class="hx-nm2" style="font-size:${x.n.length>13?17:x.n.length>9?20:23}px;overflow-wrap:anywhere">${ev(x.n)}</div><div class="hx-fm">${tn[0]}</div></div></div>`};
 const budBar=t=>[0,1].map(q=>{const a=g.a,ld=!!a&&!g.sv&&a.lead==q;return `<div class="flex-1 min-w-0 rounded-xl border-2 px-3 py-2 ${q==t?'bg-slate-800':'opacity-60 border-slate-700 bg-slate-900/80'}" style="${q==t?`border-color:${K[q]};box-shadow:0 0 15px ${K[q]}44`:''}"><div class="flex items-center justify-between gap-1"><div class="text-lg font-bold text-slate-200 leading-5 truncate">${ev(g.n[q])}</div>${ld?`<span class="shrink-0 rounded px-1.5 text-[11px] font-black leading-4 text-black flex items-center gap-1" style="background:${K[q]}">TOP BID ${a.b}M</span>`:''}</div><div class="flex justify-between items-end"><b class="text-3xl font-black flex items-center gap-1.5" style="color:${K[q]}"><span class="opacity-70">${ic('B',22)}</span>${g.B[q]}M</b><small class="text-sm text-slate-400 font-bold flex items-center gap-1">${ic('U',15)}${g.cnt[q]}/${g.N}</small></div></div>`}).join('');
 function aucView(){
- scrollTo(0,0);
+ scrollTo(0,0);navPush('auction');
  const a=g.a,x=a.x,t=a.turn,bs=base(x.o),cur=a.b||bs,ops=a.b?(SET.bg?[2,5,10,25]:[1,2,5,10]):(SET.bg?[0,5,10,25]:[0,2,5,10]),mb=maxBid(t),k=K[t],tn=tierX(x);
  app(`<div class="px-3 pt-4 pb-8">
   <div class="flex items-center justify-between mb-3"><div class="text-2xl font-black italic tracking-widest text-yellow-400 flex items-center gap-2">${ic('A',22)}LOT ${g.lot}</div><div class="text-base font-bold text-slate-400 tracking-widest">${g.cnt[0]}/${g.N} • ${g.cnt[1]}/${g.N}</div><button class="w-9 h-9 rounded-xl border border-slate-600 bg-slate-800/60 text-xl flex items-center justify-center" onclick="aucExit()">${ic('Q',20)}</button></div>
@@ -693,10 +711,11 @@ function soldView(t,x,pr){
  </div>`)
 }
 const ev=v=>String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
-const ic=(k,z)=>{const P={ALL:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',N:'<circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/>',C:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',W:'<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4v1a4 4 0 0 0 4 4M16 6h4v1a4 4 0 0 1-4 4M12 13v4M8 21h8M9 17h6"/>',T:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 11h6M9 14h6"/>',M:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',A:'<path d="M14.5 4.5l5 5M10.5 8.5l5 5-3 3-5-5zM8 15l-5 5M12 21h9"/>',R:'<path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/>',S:'<path d="M4 9v6h4l5 4V5L8 9zM16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/>',X:'<path d="M4 9v6h4l5 4V5L8 9zM17 9l5 6M22 9l-5 6"/>',G:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>',Q:'<path d="M6 6l12 12M18 6L6 18"/>',K:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',V:'<path d="M6 9l6 6 6-6"/>',B:'<circle cx="12" cy="12" r="9"/><path d="M14.8 9.2c-.6-.8-1.6-1.2-2.8-1.2-1.6 0-2.8.8-2.8 2s1.2 1.7 2.8 2 2.8.8 2.8 2-1.2 2-2.8 2c-1.2 0-2.2-.4-2.8-1.2M12 6v2M12 16v2"/>',I:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/>',U:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.4c2 .7 3.5 2.6 3.5 5.6"/>'};return `<svg width="${z}" height="${z}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${P[k]}</svg>`};
+const ic=(k,z)=>{const P={ALL:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',N:'<circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/>',C:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',W:'<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4v1a4 4 0 0 0 4 4M16 6h4v1a4 4 0 0 1-4 4M12 13v4M8 21h8M9 17h6"/>',T:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 11h6M9 14h6"/>',M:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',A:'<path d="M14.5 4.5l5 5M10.5 8.5l5 5-3 3-5-5zM8 15l-5 5M12 21h9"/>',R:'<path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/>',S:'<path d="M4 9v6h4l5 4V5L8 9zM16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/>',X:'<path d="M4 9v6h4l5 4V5L8 9zM17 9l5 6M22 9l-5 6"/>',G:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>',Q:'<path d="M6 6l12 12M18 6L6 18"/>',K:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',V:'<path d="M6 9l6 6 6-6"/>',B:'<circle cx="12" cy="12" r="9"/><path d="M14.8 9.2c-.6-.8-1.6-1.2-2.8-1.2-1.6 0-2.8.8-2.8 2s1.2 1.7 2.8 2 2.8.8 2.8 2-1.2 2-2.8 2c-1.2 0-2.2-.4-2.8-1.2M12 6v2M12 16v2"/>',I:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/>',U:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.4c2 .7 3.5 2.6 3.5 5.6"/>',P:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>'};return `<svg width="${z}" height="${z}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${P[k]||P.A}</svg>`};
 const ball=z=>`<svg width="${z}" height="${z}" viewBox="0 0 100 100"><defs><clipPath id="bc"><circle cx="50" cy="50" r="47"/></clipPath></defs><circle cx="50" cy="50" r="47" fill="#fff" stroke="#0b1020" stroke-width="3"/><g clip-path="url(#bc)" fill="#0b1020" stroke="#0b1020" stroke-width="3" stroke-linejoin="round"><polygon points="50,34 65.2,45 59.4,63 40.6,63 34.8,45"/><path fill="none" d="M50 34V16M65.2 45L82.3 39.5M59.4 63L70 77.5M40.6 63L30 77.5M34.8 45L17.7 39.5M50 16L77.6 12M50 16L22.4 12M82.3 39.5L77.6 12M82.3 39.5L94.7 64.5M70 77.5L94.7 64.5M70 77.5L50 97M30 77.5L50 97M30 77.5L5.3 64.5M17.7 39.5L5.3 64.5M17.7 39.5L22.4 12"/><circle cx="77.6" cy="12" r="9"/><circle cx="94.7" cy="64.5" r="9"/><circle cx="50" cy="97" r="9"/><circle cx="5.3" cy="64.5" r="9"/><circle cx="22.4" cy="12" r="9"/></g></svg>`;
 const SHN={ALL:'CLASSIC',N:'NATIONAL',C:'CLUB',W:'CHAMPS'};
 function home(){
+ CURSCR='home';
  const x=mc(),lv=1+Math.floor(x/3),pr=Math.round((x%3)/3*100);
  const card=p=>{const c=p?['#d9f4ff','#46b0ee','#1b5aa6','#06264f']:['#fff5bd','#f1c232','#b0800a','#4a3000'];
   return `<div class="hx-card ${p?'hx-b':'hx-a'}" style="--c1:${c[0]};--c2:${c[1]};--c3:${c[2]};--tx:${c[3]}"><div class="hx-cin"><div class="hx-rt"><b>P${p+1}</b><small>PLAYER</small></div><svg class="hx-sil" viewBox="0 0 100 100"><circle cx="50" cy="34" r="18"/><path d="M12 100c0-24 15-37 38-37s38 13 38 37z"/></svg><input class="hx-inp" maxlength="14" placeholder="NAME" value="${ev(st.n[p])}" oninput="st.n[${p}]=this.value"><div class="hx-fm">${st.f[p]}</div></div></div>`};
@@ -718,7 +737,7 @@ function home(){
  </div></div>`)
 }
 function modes(){
- scrollTo(0,0);
+ scrollTo(0,0);navPush('modes');
  app(`<div class="px-4 pt-8 pb-10"><div class="relative rounded-3xl border border-cyan-500/30 glass-panel p-5 shadow-[0_0_50px_rgba(14,165,233,0.15)]">
   <div class="flex items-center justify-between mb-6"><div class="w-10"></div><div class="text-3xl font-extrabold italic text-center leading-none tracking-wide">SELECT<br><span class="text-xl text-slate-400">MODE</span></div><button class="w-10 h-10 rounded-xl border border-slate-600 bg-slate-800/50 text-2xl flex items-center justify-center active:bg-slate-700" onclick="home()">${ic('Q',20)}</button></div>
   ${Object.keys(MD).map(k=>{const s=st.mode==k,m=MD[k];return `<button onclick="st.mode='${k}';home()" class="relative w-full mb-3 flex items-center gap-4 rounded-2xl border-2 p-4 text-left transition-all ${s?'border-yellow-400 bg-yellow-400/10 shadow-[0_0_20px_rgba(250,204,21,0.2)]':'border-slate-700 bg-slate-800/50'}">${s?'<span class="absolute top-2 right-2 w-6 h-6 rounded-full bg-yellow-400 text-black text-sm font-bold leading-6 text-center">'+ic('K',14)+'</span>':''}<div class="w-14 flex justify-center ${s?'text-yellow-300':'text-slate-400'}">${ic(k,44)}</div><div class="flex-1 min-w-0"><div class="text-3xl font-extrabold italic leading-none ${s?'text-white':'text-slate-300'}">${m[0]}</div><div class="text-base text-slate-400 font-semibold mt-1">${m[2]}</div><div class="text-sm font-black tracking-widest mt-1 ${s?'text-yellow-400':'text-slate-500'}">${k=='A'?auPool().length+' PLAYERS':pool(k).length+' TEAMS'}</div></div></button>`}).join('')}
@@ -726,7 +745,7 @@ function modes(){
  </div></div>`)
 }
 function teams(m){
- m=m||(st.mode=='A'?'ALL':st.mode);scrollTo(0,0);
+ m=m||(st.mode=='A'?'ALL':st.mode);scrollTo(0,0);navPush('teams');
  const L=pool(m).slice().sort((a,b)=>a.n.localeCompare(b.n)||a.y-b.y);
  app(`<div class="px-4 pt-8 pb-10">
   <div class="flex items-center justify-between mb-4"><div class="w-10"></div><div class="text-3xl font-extrabold italic text-center leading-none tracking-wide">${MD[m][0]}<br><span class="text-xl text-slate-400">${L.length} TEAMS</span></div><button class="w-10 h-10 rounded-xl border border-slate-600 bg-slate-800/50 text-2xl flex items-center justify-center active:bg-slate-700" onclick="home()">${ic('Q',20)}</button></div>
@@ -736,7 +755,7 @@ function teams(m){
 }
 function fpage(){
  if(st.mode=='A'){st.f=['4-3-3','4-3-3'];return go()}
- const p=st.p;
+ const p=st.p;navPush('fpage');
  app(`<div class="px-4 pt-8 pb-10"><div class="relative rounded-3xl border border-cyan-500/30 glass-panel p-5 shadow-[0_0_50px_rgba(14,165,233,0.15)]">
   <div class="flex items-center justify-between mb-6"><div class="w-10"></div><div class="text-3xl font-extrabold italic text-center leading-none tracking-wide"><span style="color:${K[p]};text-shadow:0 0 15px ${K[p]}77">${nm(p)}</span><br><span class="text-xl text-slate-400">FORMATION</span></div><button class="w-10 h-10 rounded-xl border border-slate-600 bg-slate-800/50 text-2xl flex items-center justify-center active:bg-slate-700" onclick="${p?'st.p=0;fpage()':'home()'}">${ic('Q',20)}</button></div>
   <div class="grid grid-cols-2 gap-3">${Object.keys(FM).map(f=>{const s=st.f[p]==f;return `<button onclick="sf('${f}')" class="relative rounded-2xl border-2 p-4 text-center transition-all ${s?'border-yellow-400 bg-yellow-400/10 shadow-[0_0_20px_rgba(250,204,21,0.2)]':'border-slate-700 bg-slate-800/50 hover:bg-slate-800'}">${s?'<span class="absolute top-2 right-2 w-6 h-6 rounded-full bg-yellow-400 text-black text-sm font-bold leading-6 shadow-md shadow-yellow-400/50">'+ic('K',14)+'</span>':''}<div class="text-4xl font-extrabold italic leading-none ${s?'text-white':'text-slate-300'}">${f}</div><div class="text-sm tracking-[.2em] font-bold mt-1 ${s?'text-yellow-400':'text-slate-500'}">${LB[f]}</div>${mini(f,s)}</button>`}).join('')}</div>
@@ -756,7 +775,7 @@ const SH='M22 2L2 12l7 14 7-4v34h32V22l7 4 7-14L42 2C40 8 36 10 32 10S24 8 22 2z
 function pitch(p){let k=0;return `<div class="pitch flex flex-col justify-around py-3 mt-2">`+FM[g.f[p]].map(r=>'<div class="relative z-10 flex justify-evenly">'+r.map(pos=>{const x=g.L[p][k++];return `<div class="w-[19%] text-center" ${x?`onclick="showStats(${reg(x)})"`:''}><div class="relative w-14 mx-auto drop-shadow-xl"><svg viewBox="0 0 64 58" class="w-full"><path d="${SH}" fill="${x?K[p]:'#475569'}" stroke="${x?'#fff':'#1e293b'}" stroke-width="2"/></svg><b class="absolute inset-0 flex items-center justify-center pt-2 ${x?'text-2xl text-black':'text-base text-slate-300'} font-black">${x?x.o:pos}</b></div><div class="text-[15px] font-bold leading-tight mt-1 truncate text-white drop-shadow-md">${x?x.n.split(' ').pop():''}</div></div>`}).join('')+'</div>').join('')+'</div>'}
 const sbar=p=>[0,1].map(q=>`<div class="flex-1 flex items-center justify-between rounded-xl border-2 px-3 py-2 transition-all ${q==p?'bg-slate-800 shadow-lg':'border-slate-700 bg-slate-900/80 opacity-60'}" style="${q==p?`border-color:${K[q]};box-shadow:0 0 15px ${K[q]}33`:''}"><span class="text-xl font-bold leading-5 text-slate-200">${g.n[q]}<br><small class="text-sm text-slate-400 font-semibold">${g.f[q]}</small></span><b class="text-4xl font-black" style="color:${K[q]}">${tot(q)}</b></div>`).join('');
 
-function render(){
+function render(){navPush('match');
  const p=g.t,c=g.cur;
  let h=`<div class="px-3 pt-4 ${c?'pb-[66dvh]':'pb-8'}">
   <div class="flex gap-2 mb-3">${sbar(p)}</div>
@@ -922,6 +941,7 @@ function sim(){
    $('fn').innerHTML=`<div class="pop mt-6 text-4xl font-black italic text-yellow-400">${ev(g.n[w].toUpperCase())} WINS${pen}</div>${T[w]<T[w^1]?'<div class="text-2xl font-black text-orange-400 mt-1">🔥 UPSET!</div>':''}<button class="gbtn mt-5 w-full py-4 text-4xl tracking-widest" onclick="home()">REMATCH</button><button class="bbtn mt-3 w-full py-3 text-2xl" onclick="result()">BACK TO RESULT</button>`;sfx('sold')}};
  window.skipSim=()=>{while(m<90&&$('mn'))step()};tm=setInterval(step,260)}
 function result(){
+ navPush('result');
  const a=tot(0),b=tot(1),w=a>b?0:b>a?1:-1,v=g.v;
  app(`<div class="px-4 pt-8 pb-10">
   <div class="text-center">
