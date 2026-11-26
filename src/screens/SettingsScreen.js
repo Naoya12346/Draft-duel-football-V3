@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useGame } from '../context/GameContext';
 import { useRouter } from '../navigation/Router';
@@ -42,12 +42,27 @@ export default function SettingsScreen() {
   const router = useRouter();
   const toast = useToast();
   const [confirmReset, setConfirmReset] = useState(false);
+  const taps = useRef(0);
+  const lastTap = useRef(0);
+
+  const onTitleTap = () => {
+    const now = Date.now();
+    taps.current = now - lastTap.current < 800 ? taps.current + 1 : 1;
+    lastTap.current = now;
+    if (taps.current >= 5) {
+      taps.current = 0;
+      updateSettings({ showFps: !settings.showFps });
+      toast(settings.showFps ? 'FPS meter off' : 'FPS meter on', 'success');
+    }
+  };
 
   return (
     <Screen contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <View style={{ width: 42 }} />
-        <Text style={styles.title}>SETTINGS</Text>
+        <PressableScale onPress={onTitleTap} scaleTo={0.96} accessibilityLabel="Settings">
+          <Text style={styles.title}>SETTINGS</Text>
+        </PressableScale>
         <PressableScale onPress={() => router.back()} style={{ width: 42 }} scaleTo={0.9}>
           <View style={styles.closeBtn}>
             <Icon name="close" size={20} color="#cbd5e1" />

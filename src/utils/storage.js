@@ -23,6 +23,7 @@ export const DEFAULT_SETTINGS = {
   timer: 0, // 0 = off, else seconds
   bigBids: false,
   motion: 'auto', // auto | lite | full
+  showFps: false,
 };
 
 export async function getJSON(key, fallback) {

@@ -13,7 +13,9 @@ import {
 } from '@expo-google-fonts/barlow-condensed';
 
 import { GameProvider, useGame } from './src/context/GameContext';
+import { MotionProvider } from './src/context/MotionContext';
 import { ToastProvider } from './src/components/Toast';
+import FpsMeter from './src/components/FpsMeter';
 import { RouterProvider } from './src/navigation/Router';
 import Background from './src/components/Background';
 import { C } from './src/theme';
@@ -35,8 +37,14 @@ function Boot() {
 }
 
 function Root() {
-  const { ready } = useGame();
-  return ready ? <RouterProvider /> : <Boot />;
+  const { ready, settings } = useGame();
+  if (!ready) return <Boot />;
+  return (
+    <MotionProvider>
+      <RouterProvider />
+      {settings.showFps ? <FpsMeter /> : null}
+    </MotionProvider>
+  );
 }
 
 export default function App() {

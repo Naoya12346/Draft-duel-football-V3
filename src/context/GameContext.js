@@ -17,6 +17,7 @@ import {
 import {
   buildAuctionPool,
   buildDatabase,
+  DEFAULT_ADMIN,
   mergeAdmin,
   teamMaxOvr,
   teamPool,
@@ -43,6 +44,12 @@ import {
 import { configureAudio, setSoundEnabled } from '../utils/feedback';
 
 const GameContext = createContext(null);
+
+const clampNumber = (value, min, max) => {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return min;
+  return Math.max(min, Math.min(max, n));
+};
 
 const freshLineups = () => [Array(11).fill(null), Array(11).fill(null)];
 
@@ -245,7 +252,15 @@ export function GameProvider({ children }) {
   const ref = useRef(state);
   ref.current = state;
 
-  const db = useMemo(() => buildDatabase(state.admin), [state.admin]);
+  const db = useMemo(
+    () => buildDatabase({
+      cards: state.admin.cards,
+      edits: state.admin.edits,
+      deleted: state.admin.deleted,
+      custom: state.admin.custom,
+    }),
+    [state.admin.cards, state.admin.edits, state.admin.deleted, state.admin.custom],
+  );
   const dbRef = useRef(db);
   dbRef.current = db;
 
@@ -302,52 +317,65 @@ export function GameProvider({ children }) {
     });
   }, []);
 
+  const [adminSave, setAdminSave] = useState({ status: 'saved', at: Date.now() });
+
+  const persistAdmin = useCallback((patch) => {
+    setAdminSave({ status: 'saving', at: Date.now() });
+    saveAdminData(patch)
+      .then((ok) => setAdminSave({ status: ok ? 'saved' : 'error', at: Date.now() }))
+      .catch(() => setAdminSave({ status: 'error', at: Date.now() }));
+  }, []);
+
   const updateAdmin = useCallback((patch) => {
     setState((s) => {
       const admin = { ...s.admin, ...patch };
       adminRef.current = admin;
-      saveAdminData(patch);
+      persistAdmin(patch);
       return { ...s, admin };
     });
-  }, []);
+  }, [persistAdmin]);
 
   const setRule = useCallback((key, value) => {
+    let v = value;
+    if (key === 'specialChance') v = clampNumber(value, 0, 100);
+    if (key === 'cap') v = clampNumber(value, 50, 99);
+    if (key === 'size') v = Math.max(60, clampNumber(value, 60, 2000));
     setState((s) => {
-      const admin = { ...s.admin, [key]: value };
+      const admin = { ...s.admin, [key]: v };
       adminRef.current = admin;
-      saveAdminData({ [key]: value });
+      persistAdmin({ [key]: v });
       return { ...s, admin };
     });
-  }, []);
+  }, [persistAdmin]);
 
   const addCustomPlayer = useCallback((entry) => {
     setState((s) => {
       const admin = { ...s.admin, custom: [...(s.admin.custom || []), entry] };
       adminRef.current = admin;
-      saveAdminData({ custom: admin.custom });
+      persistAdmin({ custom: admin.custom });
       return { ...s, admin };
     });
-  }, []);
+  }, [persistAdmin]);
 
   const editPlayer = useCallback((id, patch) => {
     setState((s) => {
       const edits = { ...(s.admin.edits || {}), [id]: { ...(s.admin.edits || {})[id], ...patch } };
       const admin = { ...s.admin, edits };
       adminRef.current = admin;
-      saveAdminData({ edits });
+      persistAdmin({ edits });
       return { ...s, admin };
     });
-  }, []);
+  }, [persistAdmin]);
 
   const deletePlayer = useCallback((id) => {
     setState((s) => {
       const deleted = Array.from(new Set([...(s.admin.deleted || []), id]));
       const admin = { ...s.admin, deleted };
       adminRef.current = admin;
-      saveAdminData({ deleted });
+      persistAdmin({ deleted });
       return { ...s, admin };
     });
-  }, []);
+  }, [persistAdmin]);
 
   const toggleAuction = useCallback((id) => {
     setState((s) => {
@@ -356,10 +384,10 @@ export function GameProvider({ children }) {
       off[id] = current === undefined ? true : !current;
       const admin = { ...s.admin, auctionOff: off };
       adminRef.current = admin;
-      saveAdminData({ auctionOff: off });
+      persistAdmin({ auctionOff: off });
       return { ...s, admin };
     });
-  }, []);
+  }, [persistAdmin]);
 
   const setAuctionEligible = useCallback((id, eligible) => {
     const player = dbRef.current.players.find((p) => p.id === id);
@@ -371,10 +399,10 @@ export function GameProvider({ children }) {
       else off[id] = !!eligible;
       const admin = { ...s.admin, auctionOff: off };
       adminRef.current = admin;
-      saveAdminData({ auctionOff: off });
+      persistAdmin({ auctionOff: off });
       return { ...s, admin };
     });
-  }, []);
+  }, [persistAdmin]);
 
   const setCard = useCallback((playerId, card) => {
     setState((s) => {
@@ -382,42 +410,45 @@ export function GameProvider({ children }) {
       if (card) cards.push({ ...card, pid: playerId });
       const admin = { ...s.admin, cards };
       adminRef.current = admin;
-      saveAdminData({ cards });
+      persistAdmin({ cards });
       return { ...s, admin };
     });
-  }, []);
+  }, [persistAdmin]);
 
   const removeCard = useCallback((playerId) => {
     setState((s) => {
       const cards = (s.admin.cards || []).filter((c) => c.pid !== playerId);
       const admin = { ...s.admin, cards };
       adminRef.current = admin;
-      saveAdminData({ cards });
+      persistAdmin({ cards });
       return { ...s, admin };
     });
-  }, []);
+  }, [persistAdmin]);
 
   const restoreBackup = useCallback((data) => {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return;
     const admin = mergeAdmin({
       cards: data.cards || [],
       edits: data.edits || {},
       deleted: data.deleted || [],
       auctionOff: data.auctionOff || {},
       custom: data.custom || [],
-      cap: data.cap || 92,
-      size: data.size || 400,
+      cap: clampNumber(data.cap, 50, 99),
+      size: Math.max(60, clampNumber(data.size, 60, 2000)),
       salt: data.salt || 'a',
-      specialChance: data.specialChance ?? 20,
+      specialChance: Number.isFinite(Number(data.specialChance))
+        ? Math.max(0, Math.min(100, Number(data.specialChance)))
+        : DEFAULT_ADMIN.specialChance,
     });
     setState((s) => ({ ...s, admin }));
-    saveAdminData(admin);
-  }, []);
+    persistAdmin(admin);
+  }, [persistAdmin]);
 
   const resetAdmin = useCallback(() => {
     const admin = mergeAdmin(null);
     setState((s) => ({ ...s, admin }));
-    saveAdminData(admin);
-  }, []);
+    persistAdmin(admin);
+  }, [persistAdmin]);
 
   const resetProgress = useCallback(() => {
     setState((s) => ({ ...s, stats: { matches: 0 } }));
@@ -676,6 +707,7 @@ export function GameProvider({ children }) {
       setMode,
       updateSettings,
       updateAdmin,
+      adminSave,
       setRule,
       addCustomPlayer,
       editPlayer,
@@ -711,6 +743,7 @@ export function GameProvider({ children }) {
       setMode,
       updateSettings,
       updateAdmin,
+      adminSave,
       setRule,
       addCustomPlayer,
       editPlayer,

@@ -6,6 +6,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { BackHandler, StyleSheet } from 'react-native';
 import Animated, { Easing, FadeIn, SlideInLeft, SlideInRight } from 'react-native-reanimated';
+import { useMotion } from '../context/MotionContext';
+import { MOTION } from '../theme/motion';
 
 import HomeScreen from '../screens/HomeScreen';
 import ModesScreen from '../screens/ModesScreen';
@@ -84,13 +86,19 @@ export function RouterProvider() {
 
   const top = stack[stack.length - 1];
   const Screen = SCREENS[top.name] || HomeScreen;
-  const ease = Easing.bezier(0.2, 0, 0, 1);
-  const entering =
-    direction === 'back'
-      ? SlideInLeft.duration(260).easing(ease)
-      : stack.length === 1
-        ? FadeIn.duration(220).easing(ease)
-        : SlideInRight.duration(280).easing(ease);
+  const { enabled } = useMotion();
+  const ease = Easing.bezier(...MOTION.easing.standard);
+  let entering;
+  if (!enabled) {
+    entering = FadeIn.duration(MOTION.duration.micro);
+  } else {
+    entering =
+      direction === 'back'
+        ? SlideInLeft.duration(MOTION.duration.medium).easing(ease)
+        : stack.length === 1
+          ? FadeIn.duration(MOTION.duration.small).easing(ease)
+          : SlideInRight.duration(MOTION.duration.large).easing(ease);
+  }
 
   const value = { push, replace, back, reset, popTo, stack, current: top.name };
 

@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import PressableScale from './PressableScale';
 import { F } from '../theme';
+import { MOTION } from '../theme/motion';
 
 const VARIANTS = {
   gold: {
@@ -68,12 +70,38 @@ export default function GameButton({
 }) {
   const v = VARIANTS[variant] || VARIANTS.gold;
   const s = SIZES[size] || SIZES.lg;
+  const press = useSharedValue(0);
+  const locked = useRef(0);
+  const depth = useAnimatedStyle(() => ({
+    transform: slant
+      ? [{ translateY: 3 * press.value }, { skewX: '-8deg' }]
+      : [{ translateY: 3 * press.value }],
+  }));
+  const ripple = useAnimatedStyle(() => ({ opacity: 0.16 * press.value, transform: [{ scale: 1 + press.value * 0.35 }] }));
 
   return (
-    <PressableScale onPress={onPress} disabled={disabled} style={style} scaleTo={0.96}>
-      <View
+    <PressableScale
+      onPress={() => {
+        const now = Date.now();
+        if (now - locked.current < 260) return;
+        locked.current = now;
+        if (onPress) onPress();
+      }}
+      onPressIn={() => {
+        press.value = withTiming(1, { duration: MOTION.duration.micro, easing: Easing.out(Easing.cubic) });
+      }}
+      onPressOut={() => {
+        press.value = withSpring(0, { damping: 18, stiffness: 320, mass: 0.5 });
+      }}
+      disabled={disabled}
+      style={style}
+      scaleTo={0.96}
+      overlayRadius={s.radius}
+    >
+      <Animated.View
         style={[
           styles.wrap,
+          depth,
           {
             borderRadius: s.radius,
             borderColor: disabled ? '#334155' : v.border,
@@ -81,7 +109,6 @@ export default function GameButton({
             borderBottomWidth: s.edge,
             shadowColor: v.glow,
             opacity: disabled ? 0.45 : 1,
-            transform: slant ? [{ skewX: '-8deg' }] : undefined,
           },
         ]}
       >
@@ -92,6 +119,7 @@ export default function GameButton({
           style={StyleSheet.absoluteFill}
         />
         <View pointerEvents="none" style={styles.shine} />
+        <Animated.View pointerEvents="none" style={[styles.ripple, ripple]} />
         <View
           style={[
             styles.content,
@@ -114,7 +142,7 @@ export default function GameButton({
             {label}
           </Text>
         </View>
-      </View>
+      </Animated.View>
     </PressableScale>
   );
 }
@@ -127,6 +155,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.6,
     shadowRadius: 12,
     elevation: 8,
+  },
+  ripple: {
+    position: 'absolute',
+    left: '50%',
+    top: '50%',
+    width: 220,
+    height: 220,
+    marginLeft: -110,
+    marginTop: -110,
+    borderRadius: 110,
+    backgroundColor: '#ffffff',
   },
   shine: {
     position: 'absolute',

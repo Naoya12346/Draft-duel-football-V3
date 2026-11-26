@@ -20,7 +20,10 @@ export const DEFAULT_ADMIN = {
 };
 
 export function mergeAdmin(raw) {
-  return { ...DEFAULT_ADMIN, ...(raw || {}) };
+  const clean = Object.fromEntries(
+    Object.entries(raw || {}).filter(([, value]) => value !== undefined && value !== null),
+  );
+  return { ...DEFAULT_ADMIN, ...clean };
 }
 
 /**

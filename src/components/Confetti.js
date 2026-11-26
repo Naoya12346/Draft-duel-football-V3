@@ -6,6 +6,8 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import { useMotion } from '../context/MotionContext';
+import { MOTION } from '../theme/motion';
 
 const PALETTE = ['#facc15', '#ffffff', '#38bdf8', '#a855f7', '#22c55e'];
 
@@ -28,7 +30,7 @@ function Piece({ color, spread, delay }) {
 
   useEffect(() => {
     progress.value = withTiming(1, {
-      duration: 1200 + Math.random() * 700,
+      duration: MOTION.duration.large + Math.random() * 300,
       delay: conf.delay,
       easing: Easing.out(Easing.quad),
     });
@@ -65,17 +67,20 @@ function Piece({ color, spread, delay }) {
 }
 
 /** One-shot celebration burst. Mount it (with a key) to fire. */
-export default function Confetti({ color = '#facc15', count = 60, spread = 220 }) {
+export default function Confetti({ color = '#facc15', count = 36, spread = 220 }) {
+  const { enabled } = useMotion();
   const { width, height } = useWindowDimensions();
+  const total = Math.min(40, count);
   const pieces = useMemo(
     () =>
-      Array.from({ length: count }, (_, i) => ({
+      Array.from({ length: total }, (_, i) => ({
         id: i,
         color: i % 5 === 0 ? color : PALETTE[i % PALETTE.length],
         delay: Math.random() * 180,
       })),
-    [count, color],
+    [total, color],
   );
+  if (!enabled) return null;
   return (
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, { overflow: 'hidden' }]} width={width} height={height}>
       {pieces.map((p) => (

@@ -36,6 +36,7 @@ import Confetti from '../components/Confetti';
 import TeamBadge from '../components/TeamBadge';
 import { useToast } from '../components/Toast';
 import { C, F } from '../theme';
+import { MOTION } from '../theme/motion';
 
 const K = [C.gold, C.blue];
 const TABS = ['ALL', 'GK', 'DEF', 'MID', 'FWD'];
@@ -65,12 +66,12 @@ function TeamBar({ index, name, total, active }) {
   );
 }
 
-const PlayerRow = React.memo(function PlayerRow({ player, used, lineup, onSelect }) {
+const PlayerRow = React.memo(function PlayerRow({ player, used, lineup, selected, onSelect }) {
   const pickable = canPick(used, lineup, player);
   const drafted = used.has(player.id);
   return (
-    <PressableScale onPress={() => onSelect(player)} disabled={!pickable} scaleTo={0.98} haptic="light">
-      <View style={[styles.playerRow, !pickable && styles.playerRowOff]}>
+    <PressableScale onPress={() => onSelect(player)} disabled={!pickable} scaleTo={0.98}>
+      <View style={[styles.playerRow, !pickable && styles.playerRowOff, selected && styles.playerRowSelected]}>
         <View style={[styles.posBar, { backgroundColor: posColor(player.p) }]} />
         <View style={styles.playerBody}>
           <Text numberOfLines={1} style={styles.playerName}>{player.n}</Text>
@@ -86,7 +87,7 @@ const PlayerRow = React.memo(function PlayerRow({ player, used, lineup, onSelect
   );
 });
 
-function DraftSheet({ cur, lineup, used, onSelect, height, bottomInset }) {
+function DraftSheet({ cur, lineup, used, selectedPlayer, onSelect, height, bottomInset }) {
   const [expanded, setExpanded] = useState(true);
   const [q, setQ] = useState('');
   const [tab, setTab] = useState('ALL');
@@ -94,8 +95,15 @@ function DraftSheet({ cur, lineup, used, onSelect, height, bottomInset }) {
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ translateY: translate.value }] }));
 
   useEffect(() => {
-    translate.value = withTiming(0, { duration: 320 });
-  }, []);
+    translate.value = withTiming(0, { duration: MOTION.duration.medium });
+  }, [translate]);
+
+  useEffect(() => {
+    setExpanded(true);
+    setQ('');
+    setTab('ALL');
+    translate.value = withTiming(0, { duration: MOTION.duration.medium });
+  }, [cur, translate]);
 
   const toggle = () => {
     const next = !expanded;
@@ -117,8 +125,16 @@ function DraftSheet({ cur, lineup, used, onSelect, height, bottomInset }) {
   }, [cur, q, tab]);
 
   const renderRow = useCallback(
-    ({ item }) => <PlayerRow player={item} used={used} lineup={lineup} onSelect={onSelect} />,
-    [used, lineup, onSelect],
+    ({ item }) => (
+      <PlayerRow
+        player={item}
+        used={used}
+        lineup={lineup}
+        selected={!!selectedPlayer && selectedPlayer.id === item.id}
+        onSelect={onSelect}
+      />
+    ),
+    [used, lineup, onSelect, selectedPlayer],
   );
 
   return (
@@ -175,10 +191,10 @@ function DraftSheet({ cur, lineup, used, onSelect, height, bottomInset }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
         keyboardShouldPersistTaps="handled"
+        style={styles.playerList}
         initialNumToRender={12}
         maxToRenderPerBatch={12}
         windowSize={7}
-        removeClippedSubviews
         renderItem={renderRow}
         ListEmptyComponent={
           <Text style={styles.emptyText}>No players found</Text>
@@ -247,18 +263,9 @@ export default function DraftScreen() {
   const [spinKey, setSpinKey] = useState(0);
   const [spinning, setSpinning] = useState(false);
   const [confirm, setConfirm] = useState(null);
-  const [slotChoice, setSlotChoice] = useState(null);
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [revealKey, setRevealKey] = useState(0);
   const [statsPlayer, setStatsPlayer] = useState(null);
-
-  const prevTurn = useRef(draft.t);
-  useEffect(() => {
-    if (prevTurn.current !== draft.t) {
-      prevTurn.current = draft.t;
-      setReelTeam(null);
-      setSpinKey(0);
-      setSpinning(false);
-    }
-  }, [draft.t]);
 
   const used = useMemo(() => new Set(draft.used), [draft.used]);
   const pool = useMemo(() => teamPool(db.teams, mode), [db.teams, mode]);
@@ -266,47 +273,91 @@ export default function DraftScreen() {
   const displayTeam = reelTeam || draft.cur;
   const sheetHeight = Math.min(windowHeight * 0.62, 560);
 
-  const startSpin = (respin) => {
-    if (draft.busy) return;
+  const prevTurn = useRef(draft.t);
+  const teamRef = useRef(null);
+  const finishedRef = useRef(false);
+  const usedRef = useRef(new Set());
+  const lineupRef = useRef(null);
+  usedRef.current = used;
+  lineupRef.current = lineup;
+
+  useEffect(() => {
+    if (prevTurn.current !== draft.t) {
+      prevTurn.current = draft.t;
+      setReelTeam(null);
+      setSpinKey(0);
+      setSpinning(false);
+      setSelectedPlayer(null);
+    }
+  }, [draft.t]);
+
+  const launchSpin = useCallback((respin) => {
     const res = spinDraft(respin);
     if (!res) {
       toast('No teams left to spin', 'error');
-      return;
+      return false;
     }
+    teamRef.current = res.team;
+    finishedRef.current = false;
     setReelTeam(res.team);
+    setSelectedPlayer(null);
     setSpinning(true);
     setSpinKey((k) => k + 1);
+    return true;
+  }, [spinDraft, toast]);
+
+  const startSpin = (respin) => {
+    if (draft.busy || spinning) return;
+    launchSpin(respin);
   };
 
-  const finishSpin = () => {
-    if (reelTeam) revealSpin(reelTeam);
+  const finishSpin = useCallback(() => {
+    const team = teamRef.current;
+    if (!team || finishedRef.current) return;
+    finishedRef.current = true;
+    revealSpin(team);
     setSpinning(false);
+    setRevealKey((k) => k + 1);
     playSound('bid');
-  };
+
+    const hasPick = team.pl.some((p) => canPick(usedRef.current, lineupRef.current || [], p));
+    if (!hasPick) {
+      toast('No players available — spinning again', 'error');
+      setTimeout(() => launchSpin(false), MOTION.duration.medium);
+    }
+  }, [launchSpin, revealSpin, toast]);
+
+  useEffect(() => {
+    if (!spinning || !reelTeam) return undefined;
+    const guard = setTimeout(() => finishSpin(), MOTION.duration.reel + 900);
+    return () => clearTimeout(guard);
+  }, [spinning, reelTeam, finishSpin]);
 
   const doPick = useCallback(
     (player, slot) => {
       const res = draftPick(player, slot);
-      setSlotChoice(null);
       if (!res.ok) return;
+      setSelectedPlayer(null);
       playSound('pick');
       setConfirm({ player, by: res.by, done: res.done });
     },
     [draftPick],
   );
 
-  const selectPlayer = useCallback(
-    (player) => {
-      const slots = slotsForPlayer(player);
-      if (!slots.length) return;
-      if (slots.length === 1) {
-        doPick(player, slots[0]);
-      } else {
-        setSlotChoice({ player, slots });
-      }
-    },
-    [slotsForPlayer, doPick],
+  const compatibleSlots = useMemo(
+    () => (selectedPlayer ? slotsForPlayer(selectedPlayer) : []),
+    [selectedPlayer, slotsForPlayer],
   );
+
+  const selectPlayer = useCallback((player) => {
+    if (!canPick(usedRef.current, lineupRef.current || [], player)) return;
+    setSelectedPlayer((prev) => (prev && prev.id === player.id ? null : player));
+  }, []);
+
+  const handleSlotPress = useCallback((slot) => {
+    if (!selectedPlayer) return;
+    doPick(selectedPlayer, slot);
+  }, [doPick, selectedPlayer]);
 
   const onReady = () => {
     const done = confirm && confirm.done;
@@ -349,7 +400,6 @@ export default function DraftScreen() {
           pool={pool}
           onFinish={finishSpin}
           height={76}
-          duration={3000}
         />
 
         <View style={styles.actionRow}>
@@ -373,8 +423,12 @@ export default function DraftScreen() {
           )}
         </View>
 
-        {draft.cur ? (
-          <Text style={styles.hint}>Tap a player below to draft</Text>
+        {selectedPlayer ? (
+          <Text style={[styles.hint, styles.hintActive]}>
+            {selectedPlayer.n.toUpperCase()} SELECTED · TAP A YELLOW SLOT
+          </Text>
+        ) : draft.cur ? (
+          <Text style={styles.hint}>Tap a player, then tap a yellow position</Text>
         ) : (
           <Text style={styles.hint}>Spin to reveal a squad</Text>
         )}
@@ -383,17 +437,20 @@ export default function DraftScreen() {
           lineup={lineup}
           accent={K[draft.t]}
           height={Math.min(430, windowHeight * 0.5)}
-          onPlayerPress={setStatsPlayer}
+          onPlayerPress={selectedPlayer ? undefined : setStatsPlayer}
+          compatibleSlots={compatibleSlots}
+          onSlotPress={handleSlotPress}
           animate
         />
       </ScrollView>
 
       {draft.cur ? (
         <DraftSheet
-          key={`${draft.cur.c}-${draft.cur.y}`}
+          key={`sheet-${revealKey}`}
           cur={draft.cur}
           lineup={lineup}
           used={used}
+          selectedPlayer={selectedPlayer}
           onSelect={selectPlayer}
           height={sheetHeight}
           bottomInset={insets.bottom}
@@ -408,46 +465,6 @@ export default function DraftScreen() {
           tierLabel={typeFor(confirm.player)[0]}
         />
       ) : null}
-
-      <AppModal
-        visible={!!slotChoice}
-        onClose={() => setSlotChoice(null)}
-        title="Choose position"
-        footer={
-          <GameButton
-            label="CANCEL"
-            variant="dark"
-            size="sm"
-            onPress={() => setSlotChoice(null)}
-            style={{ marginTop: 10 }}
-          />
-        }
-      >
-        <Text style={styles.modalSub}>
-          {slotChoice ? slotChoice.player.n : ''} can play in multiple slots
-        </Text>
-        <View style={styles.slotGrid}>
-          {slotChoice
-            ? slotChoice.slots.map((slot) => {
-                const pos = FORMATION_SLOTS[slot];
-                const natural = pos === slotChoice.player.p;
-                return (
-                  <PressableScale
-                    key={slot}
-                    onPress={() => doPick(slotChoice.player, slot)}
-                    style={styles.slotCell}
-                    scaleTo={0.94}
-                  >
-                    <View style={[styles.slotBtn, natural && styles.slotBtnNatural]}>
-                      <Text style={styles.slotBtnText}>{pos}</Text>
-                      {natural ? <Text style={styles.slotNatural}>NATURAL</Text> : null}
-                    </View>
-                  </PressableScale>
-                );
-              })
-            : null}
-        </View>
-      </AppModal>
 
       <AppModal visible={!!statsPlayer} onClose={() => setStatsPlayer(null)}>
         {statsPlayer ? (
@@ -514,6 +531,7 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     color: C.dim,
   },
+  hintActive: { color: C.gold },
   sheet: {
     position: 'absolute',
     left: 0,
@@ -562,6 +580,7 @@ const styles = StyleSheet.create({
   tabText: { fontFamily: F.italic, fontSize: 14, color: C.muted },
   tabTextActive: { color: '#93c5fd' },
   listContent: { paddingHorizontal: 14, paddingBottom: 20 },
+  playerList: { flex: 1 },
   playerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -576,6 +595,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   playerRowOff: { opacity: 0.34 },
+  playerRowSelected: {
+    borderColor: C.gold,
+    backgroundColor: 'rgba(250,204,21,0.16)',
+    transform: [{ translateY: -2 }],
+  },
   posBar: { width: 5, alignSelf: 'stretch', borderRadius: 3, marginLeft: 2 },
   playerBody: { flex: 1, minWidth: 0 },
   playerName: { fontFamily: F.italicExtra, fontSize: 20, color: '#fff', lineHeight: 22 },

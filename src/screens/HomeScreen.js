@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -7,7 +7,16 @@ import {
   View,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  FadeIn,
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -18,7 +27,9 @@ import PressableScale from '../components/PressableScale';
 import GameButton from '../components/GameButton';
 import Icon from '../components/Icon';
 import PlayerCard from '../components/PlayerCard';
+import { useMotion } from '../context/MotionContext';
 import { C, F, M3 } from '../theme';
+import { MOTION } from '../theme/motion';
 
 function LevelRing({ progress, matches }) {
   const radius = 26;
@@ -50,10 +61,22 @@ function LevelRing({ progress, matches }) {
 }
 
 function VsBadge() {
+  const { enabled } = useMotion();
+  const pulse = useSharedValue(1);
+  useEffect(() => {
+    if (!enabled) return undefined;
+    pulse.value = withRepeat(
+      withTiming(1.08, { duration: MOTION.duration.hero, easing: Easing.inOut(Easing.quad) }),
+      -1,
+      true,
+    );
+    return () => cancelAnimation(pulse);
+  }, [enabled, pulse]);
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
   return (
-    <View style={styles.vs}>
+    <Animated.View style={[styles.vs, style]}>
       <Text style={styles.vsText}>VS</Text>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -123,17 +146,19 @@ export default function HomeScreen() {
           </View>
         </Animated.View>
 
-        <View style={styles.hero}>
+        <Animated.View entering={FadeInDown.delay(MOTION.duration.small).duration(MOTION.duration.large)} style={styles.hero}>
           <PlayerCard
             width={cardW}
+            animate
             home={{ side: 0, label: 'P1', name: names[0], onChange: (v) => setName(0, v) }}
           />
           <PlayerCard
             width={cardW}
+            animate
             home={{ side: 1, label: 'P2', name: names[1], onChange: (v) => setName(1, v) }}
           />
           <VsBadge />
-        </View>
+        </Animated.View>
 
       </ScrollView>
 

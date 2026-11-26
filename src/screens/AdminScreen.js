@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Clipboard,
   FlatList,
@@ -27,6 +27,7 @@ import AppModal from '../components/AppModal';
 import Icon from '../components/Icon';
 import { useToast } from '../components/Toast';
 import { C, F } from '../theme';
+import { MOTION } from '../theme/motion';
 
 const TABS = [
   ['cards', 'CARDS'],
@@ -67,25 +68,79 @@ function Field({ label, value, onChange, placeholder, keyboardType, autoCapitali
 }
 
 function NumberBox({ value, onChange, min = 1, max = 99, step = 1 }) {
-  const set = (n) => onChange(clamp(n, min, max));
+  const [text, setText] = useState(String(value));
+  const current = useRef(value);
+  const delayRef = useRef(null);
+  const intervalRef = useRef(null);
+  const ticks = useRef(0);
+
+  current.current = value;
+  useEffect(() => setText(String(value)), [value]);
+  useEffect(() => () => {
+    clearTimeout(delayRef.current);
+    clearInterval(intervalRef.current);
+  }, []);
+
+  const apply = (n) => {
+    const next = clamp(n, min, max);
+    current.current = next;
+    onChange(next);
+    setText(String(next));
+  };
+
+  const hold = (delta) => {
+    apply(current.current + delta);
+    ticks.current = 0;
+    delayRef.current = setTimeout(() => {
+      let speed = 160;
+      intervalRef.current = setInterval(() => {
+        ticks.current += 1;
+        if (ticks.current % 3 === 0 && speed > 45) speed -= 20;
+        apply(current.current + delta);
+      }, speed);
+    }, 350);
+  };
+
+  const stop = () => {
+    clearTimeout(delayRef.current);
+    clearInterval(intervalRef.current);
+    intervalRef.current = null;
+  };
+
   return (
     <View style={styles.numberBox}>
-      <PressableScale onPress={() => set(value - step)} style={{ width: 40 }} scaleTo={0.9}>
+      <PressableScale
+        onPressIn={() => hold(-step)}
+        onPressOut={stop}
+        style={{ width: 40 }}
+        scaleTo={0.9}
+      >
         <View style={styles.numBtn}>
           <Icon name="minus" size={18} color="#e2e8f0" />
         </View>
       </PressableScale>
       <TextInput
-        value={String(value)}
+        value={text}
         onChangeText={(t) => {
-          const n = parseInt(t.replace(/[^0-9]/g, ''), 10);
-          if (!Number.isNaN(n)) set(n);
+          const digits = t.replace(/[^0-9]/g, '');
+          setText(digits);
+          const n = parseInt(digits, 10);
+          if (!Number.isNaN(n) && n >= min && n <= max) onChange(n);
+        }}
+        onBlur={() => {
+          const n = parseInt(text, 10);
+          apply(Number.isNaN(n) ? value : n);
         }}
         keyboardType="numeric"
         selectTextOnFocus
         style={styles.numInput}
       />
-      <PressableScale onPress={() => set(value + step)} style={{ width: 40 }} scaleTo={0.9}>
+      <PressableScale
+        onPressIn={() => hold(step)}
+        onPressOut={stop}
+        style={{ width: 40 }}
+        scaleTo={0.9}
+      >
         <View style={styles.numBtn}>
           <Icon name="plus" size={18} color="#e2e8f0" />
         </View>
@@ -133,6 +188,7 @@ function TypeGrid({ value, onPick }) {
 export default function AdminScreen() {
   const {
     admin,
+    adminSave,
     db,
     addCustomPlayer,
     editPlayer,
@@ -156,6 +212,9 @@ export default function AdminScreen() {
   const [editForm, setEditForm] = useState({ n: '', p: 'CM', o: 80, t: 'AUTO' });
   const [confirm, setConfirm] = useState(null);
   const [playerQ, setPlayerQ] = useState('');
+  const [debouncedPlayerQ, setDebouncedPlayerQ] = useState('');
+  const [debouncedAssignQ, setDebouncedAssignQ] = useState('');
+  const [poolBusy, setPoolBusy] = useState(false);
   const [playerFilter, setPlayerFilter] = useState('all');
   const [playerGroup, setPlayerGroup] = useState('ALL');
   const [restoreText, setRestoreText] = useState('');
@@ -167,6 +226,16 @@ export default function AdminScreen() {
     p: 'ST',
     o: 80,
   });
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedPlayerQ(playerQ), 200);
+    return () => clearTimeout(t);
+  }, [playerQ]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedAssignQ(assignQ), 200);
+    return () => clearTimeout(t);
+  }, [assignQ]);
 
   const playerById = useMemo(
     () => Object.fromEntries(db.players.map((p) => [p.id, p])),
@@ -183,7 +252,7 @@ export default function AdminScreen() {
   }, [admin.custom]);
 
   const filteredPlayers = useMemo(() => {
-    const q = norm(playerQ.trim());
+    const q = norm(debouncedPlayerQ.trim());
     const group = POS_GROUPS[playerGroup];
     return db.players
       .filter((p) => {
@@ -198,17 +267,17 @@ export default function AdminScreen() {
         return true;
       })
       .sort((a, b) => b.o - a.o);
-  }, [db.players, db.cardMap, playerQ, playerGroup, playerFilter, admin.auctionOff, admin.cap, admin.edits, customSet]);
+  }, [db.players, db.cardMap, debouncedPlayerQ, playerGroup, playerFilter, admin.auctionOff, admin.cap, admin.edits, customSet]);
 
   const assignPlayers = useMemo(() => {
-    const q = norm(assignQ.trim());
+    const q = norm(debouncedAssignQ.trim());
     return db.players
       .filter((p) => !q || norm(`${p.n} ${p.tn} ${p.y}`).includes(q))
       .sort((a, b) => b.o - a.o)
       .slice(0, 60);
-  }, [db.players, assignQ]);
+  }, [db.players, debouncedAssignQ]);
 
-  const dataKb = Math.round(JSON.stringify(admin).length / 1024);
+  const dataKb = useMemo(() => Math.round(JSON.stringify(admin).length / 1024), [admin]);
 
   /* ── Card actions ──────────────────────────────────────────────────────── */
 
@@ -373,16 +442,18 @@ export default function AdminScreen() {
   const doRestore = () => {
     try {
       const d = JSON.parse(restoreText);
+      if (!d || typeof d !== 'object' || Array.isArray(d)) throw new Error('bad backup');
+      const finite = (v, fallback) => (Number.isFinite(Number(v)) ? Number(v) : fallback);
       restoreBackup({
         cards: d.cd || [],
         edits: d.ed || {},
         deleted: d.dl || [],
         auctionOff: d.pa || {},
         custom: d.xp || [],
-        cap: Number(d.cap) || 92,
-        size: Number(d.sz) || 400,
+        cap: finite(d.cap, 92),
+        size: Math.max(60, finite(d.sz, 400)),
         salt: d.salt || 'a',
-        specialChance: d.fq === undefined ? 20 : Number(d.fq),
+        specialChance: Math.max(0, Math.min(100, finite(d.fq, 20))),
       });
       setRestoreText('');
       toast('Backup restored', 'success');
@@ -573,7 +644,13 @@ export default function AdminScreen() {
           </PressableScale>
           <View style={styles.headerCenter}>
             <Text style={styles.title}>ADMIN</Text>
-            <Text style={styles.subtitle}>AUTO-SAVED · {dataKb} KB</Text>
+            <Text style={styles.subtitle}>
+              {adminSave.status === 'saving'
+                ? 'SAVING…'
+                : adminSave.status === 'error'
+                  ? 'SAVE FAILED · RETRY'
+                  : `SAVED · ${dataKb} KB`}
+            </Text>
           </View>
           <View style={{ width: 44 }} />
         </View>
@@ -810,20 +887,25 @@ export default function AdminScreen() {
                   value={admin.specialChance}
                   onChange={(v) => setRule('specialChance', v)}
                   min={0}
-                  max={60}
+                  max={100}
                   step={5}
                 />
                 <Text style={styles.percent}>%</Text>
               </View>
 
               <GameButton
-                label="NEW POOL SET"
+                label={poolBusy ? 'GENERATING…' : 'NEW POOL SET'}
                 variant="dark"
                 size="sm"
+                disabled={poolBusy}
                 icon={<Icon name="refresh" size={16} color="#e2e8f0" />}
                 onPress={() => {
+                  setPoolBusy(true);
                   setRule('salt', String(Math.random()));
-                  toast('New auction set generated', 'success');
+                  setTimeout(() => {
+                    setPoolBusy(false);
+                    toast('New auction set generated', 'success');
+                  }, MOTION.duration.medium);
                 }}
                 style={{ marginTop: 14 }}
               />

@@ -1,9 +1,20 @@
 import React, { useEffect, useRef } from 'react';
 import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { ClipPath, Defs, Line, LinearGradient, Path, Stop } from 'react-native-svg';
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, {
+  Easing,
+  cancelAnimation,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import Icon from './Icon';
+import { CrestMark, FlagMark } from './TeamMarks';
+import { useMotion } from '../context/MotionContext';
 import { F, GRADIENTS, M3 } from '../theme';
+import { MOTION } from '../theme/motion';
 
 /** polygon(0 6.5%, 50% 0, 100% 6.5%, 100% 83%, 50% 100%, 0 83%) in a 373x495 box. */
 const SHAPE = 'M 0 32.2 L 186.5 0 L 373 32.2 L 373 410.8 L 186.5 495 L 0 410.8 Z';
@@ -77,24 +88,38 @@ function PlayerCard({
   home = null,
 }) {
   const height = width * RATIO;
+  const { enabled } = useMotion();
   const gid = useRef(`pcard${(seq += 1)}`).current;
-  const entered = useSharedValue(animate ? 0 : 1);
+  const entered = useSharedValue(animate && enabled ? 0 : 1);
   const press = useSharedValue(0);
+  const idle = useSharedValue(0);
+  const lastPress = useRef(0);
 
   useEffect(() => {
-    if (animate) {
-      entered.value = withTiming(1, { duration: 350, easing: Easing.out(Easing.cubic) });
+    if (animate && enabled) {
+      entered.value = withTiming(1, { duration: MOTION.duration.large, easing: Easing.bezier(...MOTION.easing.emphasized) });
     }
-  }, [animate, entered]);
+  }, [animate, enabled, entered]);
+
+  useEffect(() => {
+    if (!home || !enabled) return undefined;
+    idle.value = withRepeat(
+      withTiming(1, { duration: 1750 + (home.side || 0) * 220, easing: Easing.inOut(Easing.quad) }),
+      -1,
+      true,
+    );
+    return () => cancelAnimation(idle);
+  }, [home && home.side, enabled, idle]);
 
   const animated = useAnimatedStyle(() => ({
     opacity: entered.value,
     transform: [
-      { translateY: -4 * press.value },
-      { scale: (0.9 + 0.1 * entered.value) * (1 + 0.03 * press.value) },
+      { translateY: -4 * press.value + (home ? -4 * idle.value : 0) },
+      { rotate: home ? `${(home.side === 1 ? 1 : -1) * (1 - 2 * idle.value)}deg` : '0deg' },
+      { scale: (0.9 + 0.1 * entered.value) * (1 - 0.03 * press.value) },
     ],
   }));
-  const shine = useAnimatedStyle(() => ({ opacity: 0.12 * press.value }));
+  const shine = useAnimatedStyle(() => ({ opacity: press.value * 0.12 + (home ? idle.value * 0.07 : 0) }));
 
   const gradient = home
     ? home.side === 1
@@ -116,7 +141,7 @@ function PlayerCard({
           accessibilityLabel={name}
         />
       ) : (
-        <View style={[styles.card, { width, height, backgroundColor: M3.color.surfaceContainerLow }]}>
+        <View style={[styles.card, { width, height }]}>
           <Shield width={width} height={height} gid={gid} colors={gradient} />
 
           {home ? (
@@ -147,9 +172,11 @@ function PlayerCard({
           ) : (
             <>
               <View style={styles.top}>
-                <View>
+                <View style={styles.markColumn}>
                   <Text style={[styles.rating, { fontSize: width * 0.3 }]}>{rating}</Text>
                   <Text style={[styles.position, { fontSize: width * 0.075 }]}>{position}</Text>
+                  <FlagMark code={club} teamName={name} width={width * 0.19} />
+                  <CrestMark code={club} teamName={name} width={width * 0.17} />
                 </View>
                 <Badge label={club} width={width} />
               </View>
@@ -174,12 +201,17 @@ function PlayerCard({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={name}
-      onPress={onPress}
+      onPress={() => {
+        const now = Date.now();
+        if (now - lastPress.current < 260) return;
+        lastPress.current = now;
+        if (onPress) onPress();
+      }}
       onPressIn={() => {
-        press.value = withTiming(1, { duration: M3.motion.short, easing: Easing.out(Easing.cubic) });
+        press.value = withTiming(1, { duration: MOTION.duration.micro, easing: Easing.out(Easing.cubic) });
       }}
       onPressOut={() => {
-        press.value = withTiming(0, { duration: M3.motion.medium, easing: Easing.out(Easing.cubic) });
+        press.value = withSpring(0, { damping: 18, stiffness: 320, mass: 0.5 });
       }}
       style={{ width, height, touchAction: 'manipulation' }}
     >
@@ -190,6 +222,7 @@ function PlayerCard({
 
 const styles = StyleSheet.create({
   card: { borderRadius: 2, overflow: 'hidden' },
+  markColumn: { alignItems: 'flex-start', gap: 3 },
   top: {
     position: 'absolute',
     top: '6%',
