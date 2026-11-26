@@ -18,7 +18,7 @@ import Animated, {
 
 import { useGame } from '../context/GameContext';
 import { useRouter } from '../navigation/Router';
-import { basePrice, shortName } from '../utils/gameLogic';
+import { basePrice, flagEmoji, shortName } from '../utils/gameLogic';
 import { playSound, tapHaptic, warnHaptic } from '../utils/feedback';
 import Screen from '../components/Screen';
 import PressableScale from '../components/PressableScale';
@@ -44,7 +44,10 @@ function BudgetPanel({ index, name, budget, total, count, needed, leading }) {
         ) : null}
       </View>
       <View style={styles.budgetLine}>
-        <Text style={[styles.budgetValue, { color: K[index] }]}>{budget}M</Text>
+        <View style={styles.budgetMoney}>
+          <Icon name="coin" size={14} color={K[index]} />
+          <Text style={[styles.budgetValue, { color: K[index] }]}>{budget}M</Text>
+        </View>
         <Text style={styles.budgetCount}>{count}/{needed}</Text>
       </View>
       <View style={styles.budgetTrack}>
@@ -158,19 +161,20 @@ export default function AuctionScreen() {
         bounces
       >
         <View style={styles.header}>
+          <View style={styles.headerDeco}>
+            <Text style={styles.decoText}>≪</Text>
+          </View>
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>LOT {auction.lot}</Text>
+            <Text style={styles.headerSub}>
+              {auction.cnt[0]} / {auction.N}  ·  {auction.cnt[1]} / {auction.N}
+            </Text>
+          </View>
           <PressableScale onPress={() => setShowExit(true)} style={{ width: 44 }} scaleTo={0.9}>
             <View style={styles.iconBtn}>
               <Icon name="close" size={20} color="#cbd5e1" />
             </View>
           </PressableScale>
-          <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>LIVE AUCTION</Text>
-            <Text style={styles.headerSub}>LOT {auction.lot} · {auction.N} PER TEAM</Text>
-          </View>
-          <View style={styles.lotChip}>
-            <Text style={styles.lotChipText}>{auction.cnt[0] + auction.cnt[1]}</Text>
-            <Text style={styles.lotChipSub}>SOLD</Text>
-          </View>
         </View>
 
         <View style={styles.budgetRow}>
@@ -199,7 +203,7 @@ export default function AuctionScreen() {
             <View style={[styles.tierChip, { borderColor: `${tierColor}88`, backgroundColor: `${tierColor}1f` }]}>
               <Text style={[styles.tierText, { color: tierColor }]}>{tierLabel}</Text>
             </View>
-            <Text style={styles.bidCaption}>{bid ? 'CURRENT BID' : 'OPENING PRICE'}</Text>
+            <Text style={styles.bidCaption}>{bid ? 'CURRENT BID' : 'BASE PRICE'}</Text>
             <Animated.Text
               key={price}
               entering={ZoomIn.duration(180)}
@@ -207,6 +211,9 @@ export default function AuctionScreen() {
             >
               {price}M
             </Animated.Text>
+            <Text style={styles.clubLine} numberOfLines={1}>
+              {player.c.length <= 2 ? `${flagEmoji(player.c)} ` : ''}{player.tn} · {player.y}
+            </Text>
             {lead >= 0 ? (
               <Text style={[styles.leader, { color: K[lead] }]} numberOfLines={1}>
                 {shortName(displayName(lead), 12).toUpperCase()} LEADS
@@ -214,20 +221,22 @@ export default function AuctionScreen() {
             ) : (
               <Text style={styles.noBids}>NO BIDS YET</Text>
             )}
-            <Text style={styles.baseLine}>BASE {base}M · NEXT MIN {bid ? bid + 1 : base}M</Text>
+            <Text style={styles.baseLine}>BASE {base}M · MIN NEXT {bid ? bid + 1 : base}M</Text>
           </View>
         </View>
 
-        <View style={styles.historyRow}>
-          <Text style={styles.historyLabel}>BIDS</Text>
-          {history.length >= 4 ? (
-            <View style={styles.warChip}>
-              <Text style={styles.warText}>BID WAR</Text>
-            </View>
-          ) : null}
+        <View style={styles.historyPanel}>
+          <View style={styles.historyHead}>
+            <Text style={styles.historyLabel}>BID HISTORY</Text>
+            {history.length >= 4 ? (
+              <View style={styles.warChip}>
+                <Text style={styles.warText}>BID WAR</Text>
+              </View>
+            ) : null}
+          </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.historyScroll}>
             {history.length === 0 ? (
-              <Text style={styles.historyEmpty}>Waiting for the first bid…</Text>
+              <Text style={styles.historyEmpty}>No bids yet</Text>
             ) : (
               history.map(([t, amount], i) => (
                 <Animated.View key={`${i}-${amount}`} entering={FadeIn.duration(160)}>
@@ -365,7 +374,9 @@ const styles = StyleSheet.create({
 
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
   headerCenter: { alignItems: 'center' },
-  headerTitle: { fontFamily: F.italicExtra, fontSize: 24, color: '#fff', letterSpacing: 0.8 },
+  headerDeco: { width: 44, alignItems: 'flex-start' },
+  decoText: { fontFamily: F.italicExtra, fontSize: 26, color: C.gold, letterSpacing: -8, marginTop: -4 },
+  headerTitle: { fontFamily: F.italicExtra, fontSize: 28, color: '#fff', letterSpacing: 0.8 },
   headerSub: { fontFamily: F.extra, fontSize: 10, letterSpacing: 1.6, color: C.dim },
   iconBtn: {
     width: 42,
@@ -404,6 +415,7 @@ const styles = StyleSheet.create({
   topBid: { borderRadius: 4, paddingHorizontal: 4, paddingVertical: 1, marginLeft: 4 },
   topBidText: { fontFamily: F.extra, fontSize: 8, color: '#0b1224', letterSpacing: 0.6 },
   budgetLine: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: 1 },
+  budgetMoney: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   budgetValue: { fontFamily: F.italicExtra, fontSize: 24, lineHeight: 26 },
   budgetCount: { fontFamily: F.extra, fontSize: 12, color: C.dim, marginBottom: 3 },
   budgetTrack: {
@@ -430,10 +442,21 @@ const styles = StyleSheet.create({
   price: { fontFamily: F.italicExtra, fontSize: 46, color: C.gold, lineHeight: 48 },
   leader: { fontFamily: F.extra, fontSize: 13, letterSpacing: 0.8, marginTop: -2 },
   noBids: { fontFamily: F.extra, fontSize: 13, letterSpacing: 0.8, color: C.dim, marginTop: -2 },
+  clubLine: { fontFamily: F.bold, fontSize: 12, color: '#e2e8f0', marginTop: 3 },
   baseLine: { fontFamily: F.bold, fontSize: 11, color: C.dim, marginTop: 4 },
 
-  historyRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12 },
-  historyLabel: { fontFamily: F.extra, fontSize: 10, letterSpacing: 1.6, color: C.dim, marginRight: 6 },
+  historyPanel: {
+    marginTop: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(148,163,184,0.22)',
+    backgroundColor: 'rgba(2,6,23,0.6)',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    minHeight: 58,
+  },
+  historyHead: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
+  historyLabel: { fontFamily: F.extra, fontSize: 10, letterSpacing: 1.8, color: C.dim },
   warChip: {
     borderRadius: 5,
     borderWidth: 1,

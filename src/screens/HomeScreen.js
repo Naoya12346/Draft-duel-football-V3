@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -19,16 +19,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useGame } from '../context/GameContext';
 import { useRouter } from '../navigation/Router';
-import { buildAuctionPool, teamPool } from '../data/playerDB';
 import { MODES } from '../data/constants';
 import PressableScale from '../components/PressableScale';
 import GameButton from '../components/GameButton';
 import Icon from '../components/Icon';
 import HexCard from '../components/HexCard';
 import { C, F } from '../theme';
-
-const MODE_ORDER = ['ALL', 'N', 'C', 'A'];
-const MODE_ICONS = { ALL: 'trophy', N: 'flag', C: 'teams', A: 'whistle' };
 
 function LevelRing({ progress, matches }) {
   const radius = 26;
@@ -82,25 +78,12 @@ export default function HomeScreen() {
     names,
     setName,
     mode,
-    setMode,
     stats,
-    db,
-    admin,
     startDraft,
     settings,
   } = useGame();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-
-  const counts = useMemo(
-    () => ({
-      ALL: db.teams.length,
-      N: teamPool(db.teams, 'N').length,
-      C: teamPool(db.teams, 'C').length,
-      A: buildAuctionPool(db.players, db.cardMap, admin).length,
-    }),
-    [db, admin],
-  );
 
   const matches = stats.matches;
   const progress = (matches % 3) / 3;
@@ -160,23 +143,6 @@ export default function HomeScreen() {
           <VsBadge />
         </View>
 
-        <Animated.View entering={FadeInDown.delay(180).duration(450)}>
-          <View style={styles.modeGrid}>
-            {MODE_ORDER.map((key) => {
-              const active = mode === key;
-              return (
-                <PressableScale key={key} onPress={() => setMode(key)} style={styles.modeCell} scaleTo={0.94}>
-                  <View style={[styles.modeTile, active && styles.modeTileActive]}>
-                    <Icon name={MODE_ICONS[key]} size={22} color={active ? C.gold : C.muted} />
-                    <Text style={[styles.modeLabel, active && { color: C.gold }]}>{MODES[key].label}</Text>
-                    <Text style={styles.modeCount}>{counts[key]}</Text>
-                  </View>
-                </PressableScale>
-              );
-            })}
-          </View>
-          <Text style={styles.modeBlurb}>{MODES[mode].blurb}</Text>
-        </Animated.View>
       </ScrollView>
 
       <Animated.View

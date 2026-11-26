@@ -3,30 +3,12 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 import Svg, { ClipPath, Defs, Line, LinearGradient, Path, Stop } from 'react-native-svg';
 import Animated, { ZoomIn } from 'react-native-reanimated';
 import { useGame } from '../context/GameContext';
-import { usePlayerFace, initials } from '../hooks/usePlayerFace';
-import { teamColors } from '../data/playerDB';
 import { flagEmoji, tierColors } from '../utils/gameLogic';
 import PressableScale from './PressableScale';
 import TeamBadge from './TeamBadge';
 import { F } from '../theme';
 
 const PATH = 'M 32 0 L 200 0 L 200 236 L 168 276 L 0 276 L 0 40 Z';
-
-function Avatar({ player, size }) {
-  const face = usePlayerFace(player);
-  const [primary, secondary] = teamColors(player.c);
-  if (face) {
-    return <Image source={{ uri: face }} style={{ width: size, height: size * 1.1, borderRadius: size * 0.42 }} resizeMode="cover" />;
-  }
-  return (
-    <View style={[styles.avatar, { width: size, height: size, borderRadius: size / 2, borderColor: 'rgba(255,255,255,0.5)' }]}>
-      <View style={StyleSheet.absoluteFill}>
-        <LinearGradient colors={[primary, secondary]} style={StyleSheet.absoluteFill} />
-      </View>
-      <Text style={[styles.avatarText, { fontSize: size * 0.36 }]}>{initials(player.n)}</Text>
-    </View>
-  );
-}
 
 function HexPlayerCard({ player, width = 150, animate = false, onPress }) {
   const { db, typeFor } = useGame();
@@ -87,10 +69,6 @@ function HexPlayerCard({ player, width = 150, animate = false, onPress }) {
             <TeamBadge code={player.c} size={width * 0.24} />
           </View>
 
-          <View style={[styles.face, { width: width * 0.68, height: width * 0.68, top: height * 0.19 }]}>
-            <Avatar player={player} size={width * 0.56} />
-          </View>
-
           <View style={styles.bottom}>
             <Text numberOfLines={2} adjustsFontSizeToFit style={[styles.name, { fontSize: nameSize }]}>
               {player.n}
@@ -110,12 +88,9 @@ function HexPlayerCard({ player, width = 150, animate = false, onPress }) {
 
 const styles = StyleSheet.create({
   card: { borderRadius: 14, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 16, elevation: 10 },
-  avatar: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderWidth: 2 },
-  avatarText: { fontFamily: F.italicExtra, color: '#fff' },
   top: { position: 'absolute', top: 8, left: 10, right: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   ovr: { fontFamily: F.italicExtra, color: '#1b1200', lineHeight: undefined },
   pos: { fontFamily: F.extra, color: '#3a2a00', letterSpacing: 1, marginTop: -2 },
-  face: { position: 'absolute', alignSelf: 'center', alignItems: 'center', justifyContent: 'center' },
   bottom: { position: 'absolute', left: 8, right: 8, bottom: 12, alignItems: 'center' },
   name: { fontFamily: F.italicExtra, color: '#fff', textTransform: 'uppercase', textAlign: 'center', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   meta: { fontFamily: F.bold, color: 'rgba(255,255,255,0.82)', textAlign: 'center' },

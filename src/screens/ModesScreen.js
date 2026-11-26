@@ -38,8 +38,8 @@ export default function ModesScreen() {
       <View style={styles.header}>
         <View style={{ width: 42 }} />
         <View style={styles.headerTitle}>
-          <Text style={styles.title}>SELECT</Text>
-          <Text style={styles.subtitle}>MODE</Text>
+          <Text style={styles.title}>GAME MODE</Text>
+          <Text style={styles.subtitle}>CHOOSE YOUR ARENA</Text>
         </View>
         <PressableScale onPress={() => router.back()} style={{ width: 42 }} scaleTo={0.9}>
           <View style={styles.closeBtn}>
@@ -76,7 +76,14 @@ export default function ModesScreen() {
       })}
 
       <View style={styles.footer}>
-        <GameButton label="VIEW TEAMS" variant="blue" size="md" onPress={() => router.push('Teams')} />
+        <GameButton label="CONTINUE" variant="gold" size="md" onPress={() => router.back()} />
+        <GameButton
+          label="VIEW TEAMS"
+          variant="ghost"
+          size="sm"
+          onPress={() => router.push('Teams')}
+          style={{ marginTop: 8 }}
+        />
       </View>
     </Screen>
   );
