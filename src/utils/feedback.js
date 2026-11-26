@@ -2,7 +2,6 @@
  * Sound + haptics feedback. Sounds are tiny generated WAVs bundled with the app.
  */
 import { Audio } from 'expo-av';
-import * as Haptics from 'expo-haptics';
 
 const SOURCES = {
   bid: require('../../assets/sounds/bid.wav'),
@@ -40,22 +39,11 @@ export async function playSound(name) {
   }
 }
 
-export function tapHaptic(style = 'light') {
-  const map = {
-    light: Haptics.ImpactFeedbackStyle.Light,
-    medium: Haptics.ImpactFeedbackStyle.Medium,
-    heavy: Haptics.ImpactFeedbackStyle.Heavy,
-  };
-  Haptics.impactAsync(map[style] || map.light).catch(() => {});
-}
+export function tapHaptic() {}
 
-export function successHaptic() {
-  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-}
+export function successHaptic() {}
 
-export function warnHaptic() {
-  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
-}
+export function warnHaptic() {}
 
 export async function configureAudio() {
   try {

@@ -27,7 +27,7 @@ import Screen from '../components/Screen';
 import PressableScale from '../components/PressableScale';
 import GameButton from '../components/GameButton';
 import Icon from '../components/Icon';
-import HexPlayerCard from '../components/HexPlayerCard';
+import PlayerCard from '../components/PlayerCard';
 import Pitch from '../components/Pitch';
 import SpinReel from '../components/SpinReel';
 import AppModal from '../components/AppModal';
@@ -188,14 +188,21 @@ function DraftSheet({ cur, lineup, used, onSelect, height, bottomInset }) {
   );
 }
 
-function PickOverlay({ pick, onReady, displayName }) {
+function PickOverlay({ pick, onReady, displayName, tierLabel }) {
   const accent = K[pick.by];
   return (
     <Animated.View entering={FadeIn.duration(220)} style={styles.overlay}>
       <Confetti color={accent} count={54} />
       <Text style={styles.overlayKicker}>{(displayName(pick.by) || '').toUpperCase()} PICKED</Text>
       <Animated.View entering={ZoomIn.springify().damping(13)} style={[styles.overlayCard, { borderTopColor: accent }]}>
-        <HexPlayerCard player={pick.player} width={158} />
+        <PlayerCard
+          rating={pick.player.o}
+          position={pick.player.p}
+          club={pick.player.c}
+          name={pick.player.n}
+          tier={tierLabel}
+          width={158}
+        />
         <Text style={[styles.overlayOvr, { color: accent }]}>
           {pick.player.o} <Text style={styles.overlayOvrLabel}>OVR</Text>
         </Text>
@@ -224,6 +231,7 @@ export default function DraftScreen() {
     db,
     mode,
     displayName,
+    typeFor,
     spinDraft,
     revealSpin,
     draftPick,
@@ -398,7 +406,12 @@ export default function DraftScreen() {
       ) : null}
 
       {confirm ? (
-        <PickOverlay pick={confirm} onReady={onReady} displayName={displayName} />
+        <PickOverlay
+          pick={confirm}
+          onReady={onReady}
+          displayName={displayName}
+          tierLabel={typeFor(confirm.player)[0]}
+        />
       ) : null}
 
       <AppModal
@@ -444,7 +457,13 @@ export default function DraftScreen() {
       <AppModal visible={!!statsPlayer} onClose={() => setStatsPlayer(null)}>
         {statsPlayer ? (
           <View style={styles.statsModal}>
-            <HexPlayerCard player={statsPlayer} width={150} />
+            <PlayerCard
+              rating={statsPlayer.o}
+              position={statsPlayer.p}
+              club={statsPlayer.c}
+              name={statsPlayer.n}
+              width={150}
+            />
             <View style={styles.statsModalBody}>
               <Text style={styles.statsModalName}>{statsPlayer.n.toUpperCase()}</Text>
               <Text style={styles.statsModalMeta}>

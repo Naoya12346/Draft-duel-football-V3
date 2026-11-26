@@ -24,7 +24,7 @@ import Screen from '../components/Screen';
 import PressableScale from '../components/PressableScale';
 import GameButton from '../components/GameButton';
 import Icon from '../components/Icon';
-import HexPlayerCard from '../components/HexPlayerCard';
+import PlayerCard from '../components/PlayerCard';
 import AppModal from '../components/AppModal';
 import StatBars from '../components/StatBars';
 import { C, F } from '../theme';
@@ -57,10 +57,24 @@ function BudgetPanel({ index, name, budget, total, count, needed, leading }) {
   );
 }
 
-function BidButton({ label, amount, color, disabled, onPress }) {
+function BidButton({ label, amount, color, disabled, selected, onPress }) {
   return (
-    <PressableScale onPress={onPress} disabled={disabled} style={styles.bidCell} scaleTo={0.93}>
-      <View style={[styles.bidBtn, { borderColor: disabled ? '#334155' : color }, disabled && styles.bidOff]}>
+    <PressableScale onPress={onPress} disabled={disabled} style={styles.bidCell} scaleTo={0.93} overlayRadius={12}>
+      <View
+        style={[
+          styles.bidBtn,
+          { borderColor: disabled ? '#334155' : color },
+          disabled && styles.bidOff,
+          selected && {
+            borderColor: '#ffffff',
+            backgroundColor: `${color}2e`,
+            shadowColor: color,
+            shadowOpacity: 0.6,
+            shadowRadius: 12,
+            shadowOffset: { width: 0, height: 0 },
+          },
+        ]}
+      >
         <Text style={styles.bidLabel}>{label}</Text>
         <Text style={[styles.bidAmount, { color: disabled ? '#64748b' : color }]}>{amount}M</Text>
       </View>
@@ -72,6 +86,7 @@ export default function AuctionScreen() {
   const {
     auction,
     settings,
+    db,
     displayName,
     typeFor,
     auctionBid,
@@ -83,6 +98,8 @@ export default function AuctionScreen() {
   const { width } = useWindowDimensions();
   const [showExit, setShowExit] = useState(false);
   const [statsPlayer, setStatsPlayer] = useState(null);
+  const [highlight, setHighlight] = useState(null);
+  const [passOn, setPassOn] = useState(false);
   const pushedRef = useRef(false);
   const bar = useSharedValue(1);
   const barStyle = useAnimatedStyle(() => ({ width: `${bar.value * 100}%` }));
@@ -116,6 +133,11 @@ export default function AuctionScreen() {
       cancelAnimation(bar);
     };
   }, [current, settings.timer, auction.phase, auctionPass, bar]);
+
+  useEffect(() => {
+    setHighlight(null);
+    setPassOn(false);
+  }, [current]);
 
   if (!current) {
     return (
@@ -193,8 +215,13 @@ export default function AuctionScreen() {
         </View>
 
         <View style={styles.lotArea}>
-          <HexPlayerCard
-            player={player}
+          <PlayerCard
+            rating={player.o}
+            position={player.p}
+            club={player.c}
+            name={player.n}
+            tier={tierLabel}
+            image={db.cardMap[player.id] && db.cardMap[player.id].img}
             width={cardW}
             animate
             onPress={() => setStatsPlayer(player)}
@@ -287,14 +314,25 @@ export default function AuctionScreen() {
                 amount={amount}
                 color={K[turn]}
                 disabled={disabled}
-                onPress={() => doBid(amount)}
+                selected={highlight === inc}
+                onPress={() => {
+                  setHighlight(inc);
+                  doBid(amount);
+                }}
               />
             );
           })}
         </View>
 
-        <PressableScale onPress={doPass} scaleTo={0.97} haptic="medium">
-          <View style={styles.passBtn}>
+        <PressableScale
+          onPress={() => {
+            setPassOn(true);
+            doPass();
+          }}
+          scaleTo={0.97}
+          overlayRadius={14}
+        >
+          <View style={[styles.passBtn, passOn && styles.passOn]}>
             <View style={styles.passShine} />
             <Text style={styles.passLabel}>{lead >= 0 ? 'PASS · SELL' : 'PASS / SKIP'}</Text>
             <Text style={styles.passSub} numberOfLines={1}>
@@ -322,7 +360,13 @@ export default function AuctionScreen() {
       >
         {statsPlayer ? (
           <View style={styles.statsBody}>
-            <HexPlayerCard player={statsPlayer} width={138} />
+            <PlayerCard
+              rating={statsPlayer.o}
+              position={statsPlayer.p}
+              club={statsPlayer.c}
+              name={statsPlayer.n}
+              width={138}
+            />
             <View style={styles.statsBars}>
               <Text style={styles.statsName} numberOfLines={1}>{statsPlayer.n}</Text>
               <Text style={styles.statsMeta} numberOfLines={1}>
@@ -531,6 +575,14 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     alignItems: 'center',
     overflow: 'hidden',
+  },
+  passOn: {
+    borderColor: '#ffffff',
+    backgroundColor: '#dc2626',
+    shadowColor: '#ef4444',
+    shadowOpacity: 0.65,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 0 },
   },
   passShine: {
     position: 'absolute',
