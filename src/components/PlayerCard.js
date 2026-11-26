@@ -104,12 +104,12 @@ function PlayerCard({
   useEffect(() => {
     if (!home || !enabled) return undefined;
     idle.value = withRepeat(
-      withTiming(1, { duration: 1750 + (home.side || 0) * 220, easing: Easing.inOut(Easing.quad) }),
+      withTiming(1, { duration: 1750 + (side || 0) * 220, easing: Easing.inOut(Easing.quad) }),
       -1,
       true,
     );
     return () => cancelAnimation(idle);
-  }, [home && home.side, enabled, idle]);
+  }, [side, enabled, idle]);
 
   const animated = useAnimatedStyle(() => ({
     opacity: entered.value,
@@ -121,6 +121,7 @@ function PlayerCard({
   }));
   const shine = useAnimatedStyle(() => ({ opacity: press.value * 0.12 + (home ? idle.value * 0.07 : 0) }));
 
+  const side = home ? home.side : null;
   const gradient = home
     ? home.side === 1
       ? GRADIENTS.blue
