@@ -50,18 +50,21 @@ jobs:
           sed -i 's/^org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx6144m -XX:MaxMetaspaceSize=1024m -XX:+UseParallelGC/' android/gradle.properties
           echo "android.enableJetifier=false" >> android/gradle.properties
 
-      - name: Build debug APK
-        run: cd android && ./gradlew assembleDebug --no-daemon
+      - name: Build release APK with bundled JS
+        run: cd android && ./gradlew assembleRelease --no-daemon
+        env:
+          NODE_ENV: production
+          CI: 1
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: draft-duel-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
 
       - name: Attach APK to tag release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: android/app/build/outputs/apk/debug/app-debug.apk
+          files: android/app/build/outputs/apk/release/app-release.apk

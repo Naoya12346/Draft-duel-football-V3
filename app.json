@@ -6,9 +6,11 @@
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#020617",
+    "icon": "./assets/icon.png",
     "splash": {
-      "backgroundColor": "#020617",
-      "resizeMode": "contain"
+      "image": "./assets/splash.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#020617"
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
@@ -18,6 +20,7 @@
     "android": {
       "package": "com.draftduel.app",
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#020617"
       }
     },
