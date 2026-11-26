@@ -45,6 +45,11 @@ jobs:
       - name: Generate native Android project
         run: npx expo prebuild --platform android --clean --no-install
 
+      - name: Tune Gradle for CI
+        run: |
+          sed -i 's/^org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx6144m -XX:MaxMetaspaceSize=1024m -XX:+UseParallelGC/' android/gradle.properties
+          echo "android.enableJetifier=false" >> android/gradle.properties
+
       - name: Build debug APK
         run: cd android && ./gradlew assembleDebug --no-daemon
 
