@@ -102,7 +102,7 @@ function PlayerCard({
   }, [animate, enabled, entered]);
 
   useEffect(() => {
-    if (!home || !enabled) return undefined;
+    if (side === null || !enabled) return undefined;
     idle.value = withRepeat(
       withTiming(1, { duration: 1750 + (side || 0) * 220, easing: Easing.inOut(Easing.quad) }),
       -1,
