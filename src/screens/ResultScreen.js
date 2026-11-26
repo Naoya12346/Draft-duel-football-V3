@@ -9,6 +9,7 @@ import Screen from '../components/Screen';
 import PressableScale from '../components/PressableScale';
 import GameButton from '../components/GameButton';
 import Icon from '../components/Icon';
+import PlayerCard from '../components/PlayerCard';
 import Pitch from '../components/Pitch';
 import { C, F } from '../theme';
 
@@ -28,6 +29,8 @@ export default function ResultScreen() {
     lineups,
     totals,
     auction,
+    db,
+    typeFor,
     displayName,
     startMatch,
     startDraft,
@@ -138,6 +141,17 @@ export default function ResultScreen() {
               </View>
             </View>
             <View style={styles.teamMetaRow}>
+              {star ? (
+                <PlayerCard
+                  width={46}
+                  rating={star.o}
+                  position={star.p}
+                  club={star.c}
+                  name={star.n}
+                  tier={typeFor(star)[0]}
+                  image={star.image || (db.cardMap[star.id] && db.cardMap[star.id].img)}
+                />
+              ) : null}
               <Text style={styles.teamMeta} numberOfLines={1}>
                 {star ? `★ ${star.n} ${star.o}` : 'No players yet'}
               </Text>

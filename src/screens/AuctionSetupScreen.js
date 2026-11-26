@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     padding: 18,
     shadowColor: '#0ea5e9',
     shadowOpacity: 0.18,
-    shadowRadius: 30,
+    shadowRadius: 14,
     shadowOffset: { width: 0, height: 0 },
   },
   label: { fontFamily: F.extra, fontSize: 12, letterSpacing: 2.4, color: C.muted },

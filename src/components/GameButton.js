@@ -50,9 +50,9 @@ const VARIANTS = {
 };
 
 const SIZES = {
-  lg: { height: 62, font: 30, radius: 18, pad: 20, edge: 5 },
-  md: { height: 50, font: 23, radius: 15, pad: 16, edge: 4 },
-  sm: { height: 40, font: 18, radius: 12, pad: 12, edge: 3 },
+  lg: { height: 62, font: 30, radius: 20, pad: 20, edge: 5 },
+  md: { height: 52, font: 23, radius: 18, pad: 16, edge: 4 },
+  sm: { height: 48, font: 18, radius: 12, pad: 12, edge: 3 },
 };
 
 export default function GameButton({

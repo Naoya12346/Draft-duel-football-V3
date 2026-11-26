@@ -216,12 +216,17 @@ function makeLot(a, lineups, db) {
   if (!canBid(turn)) turn ^= 1;
   if (!canBid(turn)) return { ...a, current: null, phase: 'result' };
 
+  const auctionPlayer = {
+    ...player,
+    image: db2.cardMap && db2.cardMap[player.id] ? db2.cardMap[player.id].img : undefined,
+  };
+
   return {
     ...a,
     lot: a.lot + 1,
     dry: player.o >= 86 ? 0 : a.dry + 1,
     current: {
-      player,
+      player: auctionPlayer,
       slot: chosenSlot,
       bid: 0,
       lead: -1,
@@ -474,9 +479,14 @@ export function GameProvider({ children }) {
   }, []);
 
   const revealSpin = useCallback((team) => {
+    const squad = packSquad(team);
+    squad.pl = squad.pl.map((p) => ({
+      ...p,
+      image: dbRef.current.cardMap[p.id] ? dbRef.current.cardMap[p.id].img : undefined,
+    }));
     setState((s) => ({
       ...s,
-      draft: { ...s.draft, busy: false, pending: null, cur: packSquad(team) },
+      draft: { ...s.draft, busy: false, pending: null, cur: squad },
     }));
   }, []);
 

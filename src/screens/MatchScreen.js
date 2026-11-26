@@ -10,7 +10,7 @@ import Animated, {
 
 import { useGame } from '../context/GameContext';
 import { useRouter } from '../navigation/Router';
-import { playSound, successHaptic, tapHaptic } from '../utils/feedback';
+import { playSound } from '../utils/feedback';
 import Screen from '../components/Screen';
 import PressableScale from '../components/PressableScale';
 import GameButton from '../components/GameButton';
@@ -57,7 +57,10 @@ export default function MatchScreen() {
   const timerRef = useRef(null);
   const registeredRef = useRef(false);
   const progress = useSharedValue(0);
-  const progressStyle = useAnimatedStyle(() => ({ width: `${progress.value * 100}%` }));
+  const progressStyle = useAnimatedStyle(() => ({
+    transform: [{ scaleX: progress.value }],
+    transformOrigin: 'left',
+  }));
 
   useEffect(() => {
     if (!match) startMatch();
@@ -78,7 +81,7 @@ export default function MatchScreen() {
     let sc = [0, 0];
 
     timerRef.current = setInterval(() => {
-      m = Math.min(90, m + 3);
+      m = Math.min(90, m + 10);
       const add = [];
       while (idx < match.events.length && match.events[idx].minute <= m) {
         add.push(match.events[idx]);
@@ -93,27 +96,19 @@ export default function MatchScreen() {
         });
         setRevealed((prev) => prev.concat(add));
         setScore([...sc]);
-        if (hadGoal) {
-          playSound('sold');
-          successHaptic();
-        } else {
-          tapHaptic('light');
-        }
+        if (hadGoal) playSound('sold');
       }
       setMinute(m);
-      progress.value = withTiming(m / 90, { duration: 240 });
+      progress.value = withTiming(m / 90, { duration: 900 });
 
       if (m >= 90) {
         if (timerRef.current) clearInterval(timerRef.current);
         timerRef.current = null;
         setScore([...match.score]);
         setFinished(true);
-        if (!hadGoal) {
-          playSound('sold');
-          successHaptic();
-        }
+        if (!hadGoal) playSound('sold');
       }
-    }, 260);
+    }, 1000);
 
     return () => {
       if (timerRef.current) {
@@ -158,7 +153,6 @@ export default function MatchScreen() {
     setFinished(true);
     progress.value = withTiming(1, { duration: 180 });
     playSound('sold');
-    successHaptic();
   };
 
   const rematch = () => {
@@ -375,7 +369,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginTop: 8,
   },
-  progressFill: { height: '100%', borderRadius: 999, backgroundColor: C.gold },
+  progressFill: { width: '100%', height: '100%', borderRadius: 999, backgroundColor: C.gold },
 
   finalBanner: {
     alignItems: 'center',

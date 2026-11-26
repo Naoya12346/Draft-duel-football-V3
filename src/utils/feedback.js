@@ -1,5 +1,5 @@
 /**
- * Sound + haptics feedback. Sounds are tiny generated WAVs bundled with the app.
+ * Sound feedback only. Haptics were removed for a calm, smooth game feel.
  */
 import { Audio } from 'expo-av';
 
@@ -38,12 +38,6 @@ export async function playSound(name) {
     /* ignore */
   }
 }
-
-export function tapHaptic() {}
-
-export function successHaptic() {}
-
-export function warnHaptic() {}
 
 export async function configureAudio() {
   try {

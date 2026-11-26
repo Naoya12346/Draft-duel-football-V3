@@ -22,7 +22,7 @@ import { useRouter } from '../navigation/Router';
 import { FORMATION_SLOTS, POS_GROUPS } from '../data/constants';
 import { teamPool } from '../data/playerDB';
 import { canPick, posColor } from '../utils/gameLogic';
-import { playSound, successHaptic, tapHaptic, warnHaptic } from '../utils/feedback';
+import { playSound } from '../utils/feedback';
 import Screen from '../components/Screen';
 import PressableScale from '../components/PressableScale';
 import GameButton from '../components/GameButton';
@@ -282,19 +282,14 @@ export default function DraftScreen() {
     if (reelTeam) revealSpin(reelTeam);
     setSpinning(false);
     playSound('bid');
-    tapHaptic('medium');
   };
 
   const doPick = useCallback(
     (player, slot) => {
       const res = draftPick(player, slot);
       setSlotChoice(null);
-      if (!res.ok) {
-        warnHaptic();
-        return;
-      }
+      if (!res.ok) return;
       playSound('pick');
-      successHaptic();
       setConfirm({ player, by: res.by, done: res.done });
     },
     [draftPick],

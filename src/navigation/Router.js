@@ -5,7 +5,7 @@
  */
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { BackHandler, StyleSheet } from 'react-native';
-import Animated, { FadeIn, SlideInLeft, SlideInRight } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, SlideInLeft, SlideInRight } from 'react-native-reanimated';
 
 import HomeScreen from '../screens/HomeScreen';
 import ModesScreen from '../screens/ModesScreen';
@@ -84,12 +84,13 @@ export function RouterProvider() {
 
   const top = stack[stack.length - 1];
   const Screen = SCREENS[top.name] || HomeScreen;
+  const ease = Easing.bezier(0.2, 0, 0, 1);
   const entering =
     direction === 'back'
-      ? SlideInLeft.duration(260)
+      ? SlideInLeft.duration(260).easing(ease)
       : stack.length === 1
-        ? FadeIn.duration(280)
-        : SlideInRight.duration(280);
+        ? FadeIn.duration(220).easing(ease)
+        : SlideInRight.duration(280).easing(ease);
 
   const value = { push, replace, back, reset, popTo, stack, current: top.name };
 

@@ -19,7 +19,10 @@ function Bar({ label, value, index }) {
       withTiming(value, { duration: 620, easing: Easing.out(Easing.cubic) }),
     );
   }, [index, progress, value]);
-  const style = useAnimatedStyle(() => ({ width: `${progress.value}%` }));
+  const style = useAnimatedStyle(() => ({
+    transform: [{ scaleX: progress.value }],
+    transformOrigin: 'left',
+  }));
   const tone = value >= 85 ? '#22d3ee' : value >= 70 ? '#facc15' : '#f97316';
   return (
     <View style={styles.row}>
@@ -68,7 +71,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginHorizontal: 8,
   },
-  fillWrap: { height: '100%', borderRadius: 999, overflow: 'hidden' },
+  fillWrap: { width: '100%', height: '100%', borderRadius: 999, overflow: 'hidden' },
   value: {
     width: 26,
     textAlign: 'right',

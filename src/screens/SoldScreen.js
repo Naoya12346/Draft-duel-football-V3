@@ -1,10 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { useGame } from '../context/GameContext';
 import { useRouter } from '../navigation/Router';
-import { playSound, successHaptic, warnHaptic } from '../utils/feedback';
+import { playSound } from '../utils/feedback';
 import Screen from '../components/Screen';
 import GameButton from '../components/GameButton';
 import PlayerCard from '../components/PlayerCard';
@@ -15,7 +15,7 @@ import { C, F } from '../theme';
 const K = [C.gold, C.blue];
 
 export default function SoldScreen() {
-  const { auction, displayName, typeFor, auctionNext } = useGame();
+  const { auction, db, displayName, typeFor, auctionNext } = useGame();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { replace: navReplace, back: navBack } = router;
@@ -30,13 +30,8 @@ export default function SoldScreen() {
   useEffect(() => {
     if (fired.current) return;
     fired.current = true;
-    if (sold && sold.team >= 0) {
-      playSound('sold');
-      successHaptic();
-    } else {
-      playSound('tick');
-      warnHaptic();
-    }
+    if (sold && sold.team >= 0) playSound('sold');
+    else playSound('tick');
   }, [sold]);
 
   if (!sold || !player) {
@@ -65,7 +60,7 @@ export default function SoldScreen() {
 
   return (
     <Screen scroll={false} contentContainerStyle={styles.root}>
-      {team >= 0 ? <Confetti key={player.id} color={accent} count={70} /> : null}
+      {team >= 0 ? <Confetti key={player.id} color={accent} count={36} /> : null}
 
       <View style={styles.topLabelRow}>
         <View style={styles.line} />
@@ -74,7 +69,7 @@ export default function SoldScreen() {
       </View>
 
       <Animated.View
-        entering={ZoomIn.duration(420).springify().damping(12)}
+        entering={FadeIn.duration(300)}
         style={[styles.stamp, { borderColor: accent }]}
       >
         <Text style={[styles.stampText, { color: accent }]}>
@@ -89,17 +84,16 @@ export default function SoldScreen() {
         )}
       </Animated.View>
 
-      <Animated.View entering={FadeIn.delay(120).duration(360)}>
-        <PlayerCard
-          rating={player.o}
-          position={player.p}
-          club={player.c}
-          name={player.n}
-          tier={tierLabel}
-          width={cardW}
-          animate
-        />
-      </Animated.View>
+      <PlayerCard
+        rating={player.o}
+        position={player.p}
+        club={player.c}
+        name={player.n}
+        tier={tierLabel}
+        image={player.image || (db.cardMap[player.id] && db.cardMap[player.id].img)}
+        width={cardW}
+        animate
+      />
 
       <View style={styles.nameWrap}>
         <Text numberOfLines={1} style={styles.name}>{player.n}</Text>
@@ -160,7 +154,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     transform: [{ rotate: '-7deg' }],
     marginBottom: 14,
-    backgroundColor: 'rgba(2,6,23,0.55)',
+    backgroundColor: 'transparent',
   },
   stampText: { fontFamily: F.italicExtra, fontSize: 44, letterSpacing: 4, lineHeight: 48 },
   stampTeam: { fontFamily: F.extra, fontSize: 13, letterSpacing: 2, marginTop: -4 },

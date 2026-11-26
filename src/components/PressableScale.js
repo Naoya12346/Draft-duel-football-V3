@@ -43,6 +43,7 @@ export default function PressableScale({
           if (onPress) onPress();
         }}
         style={styles.press}
+        android_disableSound
       >
         {children}
         <Animated.View
@@ -55,9 +56,9 @@ export default function PressableScale({
 }
 
 const styles = StyleSheet.create({
-  press: { width: '100%' },
+  press: { width: '100%', touchAction: 'manipulation' },
   highlight: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.14)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
   },
 });

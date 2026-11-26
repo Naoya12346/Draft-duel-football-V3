@@ -1,47 +1,46 @@
-import React from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { ClipPath, Defs, Line, LinearGradient, Path, Stop } from 'react-native-svg';
-import Animated, { Easing, ZoomIn, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { F } from '../theme';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Icon from './Icon';
+import { F, GRADIENTS, M3 } from '../theme';
 
+/** polygon(0 6.5%, 50% 0, 100% 6.5%, 100% 83%, 50% 100%, 0 83%) in a 373x495 box. */
 const SHAPE = 'M 0 32.2 L 186.5 0 L 373 32.2 L 373 410.8 L 186.5 495 L 0 410.8 Z';
+const RATIO = 495 / 373;
+let seq = 0;
 
-function Badge({ club, width }) {
-  const size = width * 0.26;
+function Badge({ label, width }) {
+  const size = width * 0.25;
   return (
     <View style={[styles.badge, { width: size, height: size * 1.12 }]}>
       <Svg viewBox="0 0 40 46" width={size} height={size * 1.12} style={StyleSheet.absoluteFill}>
-        <Path
-          d="M3 3 L37 3 L37 31 L20 44 L3 31 Z"
-          fill="rgba(74,48,0,0.10)"
-          stroke="#4a3000"
-          strokeWidth="2"
-        />
+        <Path d="M3 3 L37 3 L37 31 L20 44 L3 31 Z" fill="rgba(0,0,0,0.06)" stroke="#4a3000" strokeWidth="2" />
       </Svg>
       <Text style={[styles.badgeText, { fontSize: width * 0.06 }]} numberOfLines={1}>
-        {String(club || '').toUpperCase().slice(0, 3)}
+        {String(label || '').toUpperCase().slice(0, 3)}
       </Text>
     </View>
   );
 }
 
-function Shield({ width, height, gid }) {
+function Shield({ width, height, gid, colors }) {
   return (
     <Svg width={width} height={height} viewBox="0 0 373 495" preserveAspectRatio="none" style={StyleSheet.absoluteFill}>
       <Defs>
         <LinearGradient id={gid} x1="0.12" y1="0" x2="0.88" y2="1">
-          <Stop offset="0" stopColor="#fff3a8" />
-          <Stop offset="0.35" stopColor="#f5c93a" />
-          <Stop offset="0.72" stopColor="#e0a824" />
-          <Stop offset="1" stopColor="#b98512" />
+          <Stop offset="0" stopColor={colors[0]} />
+          <Stop offset="0.35" stopColor={colors[1]} />
+          <Stop offset="0.72" stopColor={colors[2]} />
+          <Stop offset="1" stopColor={colors[3]} />
         </LinearGradient>
         <ClipPath id={`${gid}-clip`}>
           <Path d={SHAPE} />
         </ClipPath>
       </Defs>
       <Path d={SHAPE} fill={`url(#${gid})`} />
-      {Array.from({ length: 40 }).map((_, i) => {
-        const x = -495 + i * 14;
+      {Array.from({ length: 30 }).map((_, i) => {
+        const x = -495 + i * 20;
         return (
           <Line
             key={i}
@@ -50,8 +49,8 @@ function Shield({ width, height, gid }) {
             x2={x + 495}
             y2={495}
             stroke="#ffffff"
-            strokeWidth="6"
-            strokeOpacity="0.12"
+            strokeWidth="7"
+            strokeOpacity="0.11"
             clipPath={`url(#${gid}-clip)`}
           />
         );
@@ -61,8 +60,9 @@ function Shield({ width, height, gid }) {
 }
 
 /**
- * Exact auction card: shield shape, gold gradient, diagonal stripes.
- * Props: rating, position, club, name, tier (default GOLD).
+ * The single reusable card for the whole app.
+ * Props: rating, position, club, name, tier (default GOLD), image,
+ * width, onPress, animate. `home` turns it into a P1/P2 name card.
  */
 function PlayerCard({
   rating,
@@ -74,43 +74,93 @@ function PlayerCard({
   image,
   onPress,
   animate = false,
+  home = null,
 }) {
-  const height = width * (495 / 373);
+  const height = width * RATIO;
+  const gid = useRef(`pcard${(seq += 1)}`).current;
+  const entered = useSharedValue(animate ? 0 : 1);
   const press = useSharedValue(0);
-  const style = useAnimatedStyle(() => ({
+
+  useEffect(() => {
+    if (animate) {
+      entered.value = withTiming(1, { duration: 350, easing: Easing.out(Easing.cubic) });
+    }
+  }, [animate, entered]);
+
+  const animated = useAnimatedStyle(() => ({
+    opacity: entered.value,
     transform: [
       { translateY: -4 * press.value },
-      { scale: 1 + 0.03 * press.value },
+      { scale: (0.9 + 0.1 * entered.value) * (1 + 0.03 * press.value) },
     ],
   }));
-  const shine = useAnimatedStyle(() => ({ opacity: 0.09 * press.value }));
-  const gid = `card-${String(name || 'p').replace(/[^a-zA-Z0-9]/g, '')}`;
+  const shine = useAnimatedStyle(() => ({ opacity: 0.12 * press.value }));
+
+  const gradient = home
+    ? home.side === 1
+      ? GRADIENTS.blue
+      : GRADIENTS.gold
+    : GRADIENTS.gold;
+  const initials = home
+    ? (home.name || '').trim().slice(0, 2).toUpperCase() || home.label
+    : '';
 
   const card = (
-    <Animated.View
-      entering={animate ? ZoomIn.duration(380) : undefined}
-      style={[{ width, height }, style]}
-    >
+    <Animated.View style={[{ width, height }, animated]}>
       {image ? (
-        <Image source={{ uri: image }} style={{ width, height }} resizeMode="contain" />
+        <Image
+          source={{ uri: image }}
+          style={{ width, height }}
+          resizeMode="contain"
+          accessible
+          accessibilityLabel={name}
+        />
       ) : (
-        <View style={[styles.card, { width, height }]}>
-          <Shield width={width} height={height} gid={gid} />
+        <View style={[styles.card, { width, height, backgroundColor: M3.color.surfaceContainerLow }]}>
+          <Shield width={width} height={height} gid={gid} colors={gradient} />
 
-          <View style={styles.top}>
-            <View>
-              <Text style={[styles.rating, { fontSize: width * 0.30 }]}>{rating}</Text>
-              <Text style={[styles.position, { fontSize: width * 0.075 }]}>{position}</Text>
-            </View>
-            <Badge club={club} width={width} />
-          </View>
-
-          <View style={styles.bottom}>
-            <Text numberOfLines={2} adjustsFontSizeToFit style={[styles.name, { fontSize: width * 0.155 }]}>
-              {name}
-            </Text>
-            <Text style={[styles.tier, { fontSize: width * 0.062 }]}>{tier}</Text>
-          </View>
+          {home ? (
+            <>
+              <View style={styles.top}>
+                <View>
+                  <Text style={[styles.homeLabel, { fontSize: width * 0.21 }]}>{home.label}</Text>
+                  <Text style={[styles.homeSub, { fontSize: width * 0.07 }]}>PLAYER</Text>
+                </View>
+                <Icon name="user" size={width * 0.14} color="#4a3000" />
+              </View>
+              <View style={[styles.avatar, { width: width * 0.42, height: width * 0.42, borderRadius: width * 0.21 }]}>
+                <Text style={[styles.avatarText, { fontSize: width * 0.17 }]}>{initials}</Text>
+              </View>
+              <View style={styles.homeBottom}>
+                <TextInput
+                  value={home.name}
+                  onChangeText={home.onChange}
+                  placeholder="NAME"
+                  placeholderTextColor="rgba(74,48,0,0.45)"
+                  maxLength={12}
+                  autoCapitalize="characters"
+                  style={[styles.homeInput, { fontSize: width * 0.15 }]}
+                />
+                <Text style={[styles.homeFormation, { fontSize: width * 0.075 }]}>4 - 3 - 3</Text>
+              </View>
+            </>
+          ) : (
+            <>
+              <View style={styles.top}>
+                <View>
+                  <Text style={[styles.rating, { fontSize: width * 0.3 }]}>{rating}</Text>
+                  <Text style={[styles.position, { fontSize: width * 0.075 }]}>{position}</Text>
+                </View>
+                <Badge label={club} width={width} />
+              </View>
+              <View style={styles.bottom}>
+                <Text numberOfLines={2} adjustsFontSizeToFit style={[styles.name, { fontSize: width * 0.155 }]}>
+                  {name}
+                </Text>
+                <Text style={[styles.tier, { fontSize: width * 0.062 }]}>{tier}</Text>
+              </View>
+            </>
+          )}
 
           <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.highlight, shine]} />
         </View>
@@ -122,14 +172,16 @@ function PlayerCard({
 
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={name}
       onPress={onPress}
       onPressIn={() => {
-        press.value = withTiming(1, { duration: 250, easing: Easing.out(Easing.cubic) });
+        press.value = withTiming(1, { duration: M3.motion.short, easing: Easing.out(Easing.cubic) });
       }}
       onPressOut={() => {
-        press.value = withTiming(0, { duration: 250, easing: Easing.out(Easing.cubic) });
+        press.value = withTiming(0, { duration: M3.motion.medium, easing: Easing.out(Easing.cubic) });
       }}
-      style={{ width, height }}
+      style={{ width, height, touchAction: 'manipulation' }}
     >
       {card}
     </Pressable>
@@ -162,7 +214,31 @@ const styles = StyleSheet.create({
     textShadowRadius: 3,
   },
   tier: { fontFamily: F.extra, color: '#7a5410', letterSpacing: 2.4, marginTop: 2 },
-  highlight: { backgroundColor: '#ffffff' },
+  homeLabel: { fontFamily: F.italicExtra, color: '#fff', lineHeight: undefined },
+  homeSub: { fontFamily: F.extra, color: 'rgba(255,255,255,0.9)', letterSpacing: 2.2 },
+  avatar: {
+    position: 'absolute',
+    top: '30%',
+    alignSelf: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: { fontFamily: F.italicExtra, color: '#fff' },
+  homeBottom: { position: 'absolute', left: '7%', right: '7%', bottom: '12%', alignItems: 'center' },
+  homeInput: {
+    width: '100%',
+    textAlign: 'center',
+    fontFamily: F.italicExtra,
+    color: '#fff',
+    borderBottomWidth: 1.5,
+    borderBottomColor: 'rgba(255,255,255,0.5)',
+    paddingVertical: 0,
+  },
+  homeFormation: { fontFamily: F.extra, color: '#fff', letterSpacing: 2, marginTop: 4 },
+  highlight: { backgroundColor: M3.color.statePressed },
 });
 
 export default React.memo(PlayerCard);

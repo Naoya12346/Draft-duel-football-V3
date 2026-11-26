@@ -1,19 +1,13 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, {
-  FadeIn,
-  FadeInDown,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -23,8 +17,8 @@ import { MODES } from '../data/constants';
 import PressableScale from '../components/PressableScale';
 import GameButton from '../components/GameButton';
 import Icon from '../components/Icon';
-import HexCard from '../components/HexCard';
-import { C, F } from '../theme';
+import PlayerCard from '../components/PlayerCard';
+import { C, F, M3 } from '../theme';
 
 function LevelRing({ progress, matches }) {
   const radius = 26;
@@ -55,21 +49,11 @@ function LevelRing({ progress, matches }) {
   );
 }
 
-const P1_COLORS = ['#fff5bd', '#f5c518', '#b0800a', '#fde68a'];
-const P2_COLORS = ['#e0f4ff', '#46b0ee', '#1b5aa6', '#93c5fd'];
-
 function VsBadge() {
-  const scale = useSharedValue(1);
-  useEffect(() => {
-    scale.value = withRepeat(withTiming(1.08, { duration: 820 }), -1, true);
-  }, [scale]);
-  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   return (
-    <Animated.View style={styles.vs}>
-      <Animated.View style={style}>
-        <Text style={styles.vsText}>VS</Text>
-      </Animated.View>
-    </Animated.View>
+    <View style={styles.vs}>
+      <Text style={styles.vsText}>VS</Text>
+    </View>
   );
 }
 
@@ -84,6 +68,8 @@ export default function HomeScreen() {
   } = useGame();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const cardW = Math.min(152, Math.max(118, (width - 84) / 2));
 
   const matches = stats.matches;
   const progress = (matches % 3) / 3;
@@ -103,7 +89,7 @@ export default function HomeScreen() {
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 10 }]}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View entering={FadeIn.duration(400)} style={styles.topRow}>
+        <Animated.View entering={FadeIn.duration(M3.motion.long)} style={styles.topRow}>
           <LevelRing progress={progress} matches={matches} />
           <View style={styles.topMeta}>
             <Text style={styles.levelText}>LV. {1 + Math.floor(matches / 3)}</Text>
@@ -138,8 +124,14 @@ export default function HomeScreen() {
         </Animated.View>
 
         <View style={styles.hero}>
-          <HexCard index={0} name={names[0]} onChange={(v) => setName(0, v)} colors={P1_COLORS} dark />
-          <HexCard index={1} name={names[1]} onChange={(v) => setName(1, v)} colors={P2_COLORS} />
+          <PlayerCard
+            width={cardW}
+            home={{ side: 0, label: 'P1', name: names[0], onChange: (v) => setName(0, v) }}
+          />
+          <PlayerCard
+            width={cardW}
+            home={{ side: 1, label: 'P2', name: names[1], onChange: (v) => setName(1, v) }}
+          />
           <VsBadge />
         </View>
 
@@ -205,23 +197,23 @@ const styles = StyleSheet.create({
   levelText: { fontFamily: F.italicExtra, fontSize: 22, color: '#fff', letterSpacing: 0.5 },
   xpRow: { flexDirection: 'row', gap: 3, marginTop: 5 },
   xpBar: { width: 24, height: 8, backgroundColor: '#1e293b', borderWidth: 1, borderColor: '#475569', transform: [{ skewX: '-22deg' }] },
-  xpBarOn: { backgroundColor: C.gold, borderColor: '#fde68a', shadowColor: C.gold, shadowOpacity: 0.8, shadowRadius: 6, shadowOffset: { width: 0, height: 0 } },
+  xpBarOn: { backgroundColor: C.gold, borderColor: '#fde68a' },
   matchesChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 7,
-    borderRadius: 12,
+    borderRadius: M3.shape.md,
     borderWidth: 1,
     borderColor: 'rgba(250,204,21,0.4)',
     backgroundColor: 'rgba(2,6,23,0.8)',
   },
   matchesText: { fontFamily: F.extra, fontSize: 20, color: '#fff' },
-  iconBtn: { width: 42 },
+  iconBtn: { width: M3.touch },
   iconBtnInner: {
-    width: 42,
-    height: 42,
+    width: M3.touch,
+    height: M3.touch,
     borderRadius: 21,
     borderWidth: 1,
     borderColor: 'rgba(148,163,184,0.4)',
@@ -318,10 +310,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#ff5028',
-    shadowOpacity: 0.8,
-    shadowRadius: 14,
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
     shadowOffset: { width: 0, height: 0 },
-    elevation: 12,
+    elevation: 6,
     zIndex: 5,
   },
   vsText: { fontFamily: F.italicExtra, fontSize: 21, color: '#fff' },

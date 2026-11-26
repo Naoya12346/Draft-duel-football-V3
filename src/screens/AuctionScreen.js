@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -19,7 +20,7 @@ import Animated, {
 import { useGame } from '../context/GameContext';
 import { useRouter } from '../navigation/Router';
 import { basePrice, flagEmoji, shortName } from '../utils/gameLogic';
-import { playSound, tapHaptic, warnHaptic } from '../utils/feedback';
+import { playSound } from '../utils/feedback';
 import Screen from '../components/Screen';
 import PressableScale from '../components/PressableScale';
 import GameButton from '../components/GameButton';
@@ -27,11 +28,11 @@ import Icon from '../components/Icon';
 import PlayerCard from '../components/PlayerCard';
 import AppModal from '../components/AppModal';
 import StatBars from '../components/StatBars';
-import { C, F } from '../theme';
+import { C, F, M3 } from '../theme';
 
 const K = [C.gold, C.blue];
 
-function BudgetPanel({ index, name, budget, total, count, needed, leading }) {
+function BudgetCard({ index, name, budget, total, count, needed, leading }) {
   const pct = Math.max(0, Math.min(100, (budget / Math.max(1, total)) * 100));
   return (
     <View style={[styles.budgetPanel, leading && { borderColor: K[index] }]}>
@@ -67,11 +68,7 @@ function BidButton({ label, amount, color, disabled, selected, onPress }) {
           disabled && styles.bidOff,
           selected && {
             borderColor: '#ffffff',
-            backgroundColor: `${color}2e`,
-            shadowColor: color,
-            shadowOpacity: 0.6,
-            shadowRadius: 12,
-            shadowOffset: { width: 0, height: 0 },
+            backgroundColor: M3.color.surfaceContainerHighest,
           },
         ]}
       >
@@ -102,9 +99,13 @@ export default function AuctionScreen() {
   const [passOn, setPassOn] = useState(false);
   const pushedRef = useRef(false);
   const bar = useSharedValue(1);
-  const barStyle = useAnimatedStyle(() => ({ width: `${bar.value * 100}%` }));
+  const barStyle = useAnimatedStyle(() => ({
+    transform: [{ scaleX: bar.value }],
+    transformOrigin: 'left',
+  }));
 
   const current = auction.current;
+  const history = useMemo(() => (current && current.history) || [], [current]);
   const { push: navPush, replace: navReplace, reset: navReset } = router;
 
   useEffect(() => {
@@ -139,6 +140,16 @@ export default function AuctionScreen() {
     setPassOn(false);
   }, [current]);
 
+  useEffect(() => {
+    if (!current || !auction.pool || !auction.pool.length) return;
+    const used = new Set(auction.used);
+    const urls = auction.pool
+      .filter((p) => !used.has(p.id) && db.cardMap[p.id] && db.cardMap[p.id].img)
+      .slice(0, 3)
+      .map((p) => db.cardMap[p.id].img);
+    urls.forEach((uri) => Image.prefetch(uri).catch(() => {}));
+  }, [current, auction.pool, auction.used, db.cardMap]);
+
   if (!current) {
     return (
       <Screen scroll={false} contentContainerStyle={styles.loading}>
@@ -160,20 +171,13 @@ export default function AuctionScreen() {
   const cardW = Math.max(118, Math.min(150, width * 0.33));
 
   const doBid = (amount) => {
-    if (auctionBid(amount)) {
-      playSound('bid');
-      tapHaptic('medium');
-    } else {
-      warnHaptic();
-    }
+    if (auctionBid(amount)) playSound('bid');
   };
 
   const doPass = () => {
     playSound('tick');
     auctionPass();
   };
-
-  const history = current.history || [];
 
   return (
     <Screen scroll={false} contentContainerStyle={styles.root}>
@@ -201,7 +205,7 @@ export default function AuctionScreen() {
 
         <View style={styles.budgetRow}>
           {[0, 1].map((t) => (
-            <BudgetPanel
+            <BudgetCard
               key={t}
               index={t}
               name={displayName(t)}
@@ -221,7 +225,7 @@ export default function AuctionScreen() {
             club={player.c}
             name={player.n}
             tier={tierLabel}
-            image={db.cardMap[player.id] && db.cardMap[player.id].img}
+            image={player.image || (db.cardMap[player.id] && db.cardMap[player.id].img)}
             width={cardW}
             animate
             onPress={() => setStatsPlayer(player)}
@@ -532,7 +536,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(30,41,59,0.9)',
     overflow: 'hidden',
   },
-  timerFill: { height: '100%', borderRadius: 999, backgroundColor: C.gold },
+  timerFill: { width: '100%', height: '100%', borderRadius: 999, backgroundColor: C.gold },
   timerText: { fontFamily: F.extra, fontSize: 9, letterSpacing: 1.6, color: C.dim, marginTop: 3, textAlign: 'right' },
 
   turnBanner: {
