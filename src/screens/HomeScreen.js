@@ -1,13 +1,19 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeIn, FadeInDown, ZoomIn } from 'react-native-reanimated';
+import Animated, {
+  FadeIn,
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -18,6 +24,7 @@ import { MODES } from '../data/constants';
 import PressableScale from '../components/PressableScale';
 import GameButton from '../components/GameButton';
 import Icon from '../components/Icon';
+import HexCard from '../components/HexCard';
 import { C, F } from '../theme';
 
 const MODE_ORDER = ['ALL', 'N', 'C', 'A'];
@@ -52,44 +59,20 @@ function LevelRing({ progress, matches }) {
   );
 }
 
-function HeroCard({ index, name, onChange, colorA, colorB, dark }) {
-  const label = `P${index + 1}`;
-  const initials = name.trim() ? name.trim().slice(0, 2).toUpperCase() : label;
+const P1_COLORS = ['#fff5bd', '#f5c518', '#b0800a', '#fde68a'];
+const P2_COLORS = ['#e0f4ff', '#46b0ee', '#1b5aa6', '#93c5fd'];
+
+function VsBadge() {
+  const scale = useSharedValue(1);
+  useEffect(() => {
+    scale.value = withRepeat(withTiming(1.08, { duration: 820 }), -1, true);
+  }, [scale]);
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   return (
-    <Animated.View
-      entering={FadeInDown.delay(index * 90).springify().damping(13)}
-      style={[
-        styles.heroCard,
-        {
-          borderColor: colorA,
-          shadowColor: colorA,
-          transform: [{ rotate: index === 0 ? '-6deg' : '6deg' }],
-        },
-      ]}
-    >
-      <LinearGradient colors={[colorA, colorB]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
-      <View style={styles.heroGloss} />
-      <View style={styles.heroTop}>
-        <View>
-          <Text style={[styles.heroLabel, dark && { color: '#3a2a00' }]}>{label}</Text>
-          <Text style={[styles.heroSub, dark && { color: '#5a4300' }]}>PLAYER</Text>
-        </View>
-        <Icon name="user" size={20} color={dark ? '#5a4300' : 'rgba(255,255,255,0.85)'} />
-      </View>
-      <View style={styles.heroAvatar}>
-        <Text style={[styles.heroAvatarText, dark && { color: '#3a2a00' }]}>{initials}</Text>
-      </View>
-      <TextInput
-        value={name}
-        onChangeText={onChange}
-        placeholder="NAME"
-        placeholderTextColor={dark ? 'rgba(58,42,0,0.45)' : 'rgba(255,255,255,0.5)'}
-        maxLength={14}
-        autoCapitalize="characters"
-        style={[styles.heroInput, dark ? { color: '#1b1200' } : { color: '#fff' }]}
-        selectionColor={C.gold}
-      />
-      <Text style={[styles.heroFormation, dark && { color: '#5a4300' }]}>4-3-3</Text>
+    <Animated.View style={styles.vs}>
+      <Animated.View style={style}>
+        <Text style={styles.vsText}>VS</Text>
+      </Animated.View>
     </Animated.View>
   );
 }
@@ -149,7 +132,7 @@ export default function HomeScreen() {
           </View>
           <View style={{ flex: 1 }} />
           <View style={styles.matchesChip}>
-            <Icon name="trophy" size={18} color={C.gold} />
+            <Icon name="coin" size={17} color={C.gold} />
             <Text style={styles.matchesText}>{matches}</Text>
           </View>
           <PressableScale onPress={() => router.push('Settings')} style={styles.iconBtn} scaleTo={0.9}>
@@ -172,24 +155,9 @@ export default function HomeScreen() {
         </Animated.View>
 
         <View style={styles.hero}>
-          <HeroCard
-            index={0}
-            name={names[0]}
-            onChange={(v) => setName(0, v)}
-            colorA="#fff5bd"
-            colorB="#e0a800"
-            dark
-          />
-          <HeroCard
-            index={1}
-            name={names[1]}
-            onChange={(v) => setName(1, v)}
-            colorA="#d9f4ff"
-            colorB="#2b7fd4"
-          />
-          <Animated.View entering={ZoomIn.delay(420).springify()} style={styles.vs}>
-            <Text style={styles.vsText}>VS</Text>
-          </Animated.View>
+          <HexCard index={0} name={names[0]} onChange={(v) => setName(0, v)} colors={P1_COLORS} dark />
+          <HexCard index={1} name={names[1]} onChange={(v) => setName(1, v)} colors={P2_COLORS} />
+          <VsBadge />
         </View>
 
         <Animated.View entering={FadeInDown.delay(180).duration(450)}>

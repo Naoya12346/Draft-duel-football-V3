@@ -7,7 +7,7 @@ import { useRouter } from '../navigation/Router';
 import { playSound, successHaptic, warnHaptic } from '../utils/feedback';
 import Screen from '../components/Screen';
 import GameButton from '../components/GameButton';
-import PlayerCard from '../components/PlayerCard';
+import HexPlayerCard from '../components/HexPlayerCard';
 import Confetti from '../components/Confetti';
 import Icon from '../components/Icon';
 import { C, F } from '../theme';
@@ -90,7 +90,7 @@ export default function SoldScreen() {
       </Animated.View>
 
       <Animated.View entering={FadeIn.delay(120).duration(360)}>
-        <PlayerCard player={player} width={cardW} animate />
+        <HexPlayerCard player={player} width={cardW} animate />
       </Animated.View>
 
       <View style={styles.nameWrap}>

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   ScrollView,
@@ -21,13 +21,13 @@ import { useGame } from '../context/GameContext';
 import { useRouter } from '../navigation/Router';
 import { FORMATION_SLOTS, POS_GROUPS } from '../data/constants';
 import { teamPool } from '../data/playerDB';
-import { canPick, getPlayerStats, posColor } from '../utils/gameLogic';
+import { canPick, posColor } from '../utils/gameLogic';
 import { playSound, successHaptic, tapHaptic, warnHaptic } from '../utils/feedback';
 import Screen from '../components/Screen';
 import PressableScale from '../components/PressableScale';
 import GameButton from '../components/GameButton';
 import Icon from '../components/Icon';
-import PlayerCard from '../components/PlayerCard';
+import HexPlayerCard from '../components/HexPlayerCard';
 import Pitch from '../components/Pitch';
 import SpinReel from '../components/SpinReel';
 import AppModal from '../components/AppModal';
@@ -65,10 +65,9 @@ function TeamBar({ index, name, total, active }) {
   );
 }
 
-function PlayerRow({ player, used, lineup, onSelect }) {
+const PlayerRow = React.memo(function PlayerRow({ player, used, lineup, onSelect }) {
   const pickable = canPick(used, lineup, player);
   const drafted = used.has(player.id);
-  const stats = getPlayerStats(player);
   return (
     <PressableScale onPress={() => onSelect(player)} disabled={!pickable} scaleTo={0.98} haptic="light">
       <View style={[styles.playerRow, !pickable && styles.playerRowOff]}>
@@ -77,22 +76,15 @@ function PlayerRow({ player, used, lineup, onSelect }) {
           <Text numberOfLines={1} style={styles.playerName}>{player.n}</Text>
           <View style={styles.playerSubRow}>
             <Text style={[styles.playerPos, { color: posColor(player.p) }]}>{player.p}</Text>
+            <Text style={styles.playerTeam} numberOfLines={1}>{player.tn} {player.y}</Text>
             {drafted ? <Text style={styles.draftedTag}>DRAFTED</Text> : null}
-          </View>
-          <View style={styles.statsRow}>
-            {stats.map(([label, value]) => (
-              <View key={label} style={styles.statCell}>
-                <Text style={styles.statLabel}>{label}</Text>
-                <Text style={styles.statValue}>{value}</Text>
-              </View>
-            ))}
           </View>
         </View>
         <Text style={[styles.playerOvr, player.o >= 85 && styles.playerOvrHot]}>{player.o}</Text>
       </View>
     </PressableScale>
   );
-}
+});
 
 function DraftSheet({ cur, lineup, used, onSelect, height, bottomInset }) {
   const [expanded, setExpanded] = useState(true);
@@ -123,6 +115,11 @@ function DraftSheet({ cur, lineup, used, onSelect, height, bottomInset }) {
       .filter((p) => (!group || group.includes(p.p)) && (!query || p.n.toLowerCase().includes(query)))
       .sort((a, b) => b.o - a.o);
   }, [cur, q, tab]);
+
+  const renderRow = useCallback(
+    ({ item }) => <PlayerRow player={item} used={used} lineup={lineup} onSelect={onSelect} />,
+    [used, lineup, onSelect],
+  );
 
   return (
     <Animated.View
@@ -178,9 +175,11 @@ function DraftSheet({ cur, lineup, used, onSelect, height, bottomInset }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
         keyboardShouldPersistTaps="handled"
-        renderItem={({ item }) => (
-          <PlayerRow player={item} used={used} lineup={lineup} onSelect={onSelect} />
-        )}
+        initialNumToRender={12}
+        maxToRenderPerBatch={12}
+        windowSize={7}
+        removeClippedSubviews
+        renderItem={renderRow}
         ListEmptyComponent={
           <Text style={styles.emptyText}>No players found</Text>
         }
@@ -196,7 +195,7 @@ function PickOverlay({ pick, onReady, displayName }) {
       <Confetti color={accent} count={54} />
       <Text style={styles.overlayKicker}>{(displayName(pick.by) || '').toUpperCase()} PICKED</Text>
       <Animated.View entering={ZoomIn.springify().damping(13)} style={[styles.overlayCard, { borderTopColor: accent }]}>
-        <PlayerCard player={pick.player} width={158} />
+        <HexPlayerCard player={pick.player} width={158} />
         <Text style={[styles.overlayOvr, { color: accent }]}>
           {pick.player.o} <Text style={styles.overlayOvrLabel}>OVR</Text>
         </Text>
@@ -278,27 +277,33 @@ export default function DraftScreen() {
     tapHaptic('medium');
   };
 
-  const doPick = (player, slot) => {
-    const res = draftPick(player, slot);
-    setSlotChoice(null);
-    if (!res.ok) {
-      warnHaptic();
-      return;
-    }
-    playSound('pick');
-    successHaptic();
-    setConfirm({ player, by: res.by, done: res.done });
-  };
+  const doPick = useCallback(
+    (player, slot) => {
+      const res = draftPick(player, slot);
+      setSlotChoice(null);
+      if (!res.ok) {
+        warnHaptic();
+        return;
+      }
+      playSound('pick');
+      successHaptic();
+      setConfirm({ player, by: res.by, done: res.done });
+    },
+    [draftPick],
+  );
 
-  const selectPlayer = (player) => {
-    const slots = slotsForPlayer(player);
-    if (!slots.length) return;
-    if (slots.length === 1) {
-      doPick(player, slots[0]);
-    } else {
-      setSlotChoice({ player, slots });
-    }
-  };
+  const selectPlayer = useCallback(
+    (player) => {
+      const slots = slotsForPlayer(player);
+      if (!slots.length) return;
+      if (slots.length === 1) {
+        doPick(player, slots[0]);
+      } else {
+        setSlotChoice({ player, slots });
+      }
+    },
+    [slotsForPlayer, doPick],
+  );
 
   const onReady = () => {
     const done = confirm && confirm.done;
@@ -439,7 +444,7 @@ export default function DraftScreen() {
       <AppModal visible={!!statsPlayer} onClose={() => setStatsPlayer(null)}>
         {statsPlayer ? (
           <View style={styles.statsModal}>
-            <PlayerCard player={statsPlayer} width={150} />
+            <HexPlayerCard player={statsPlayer} width={150} />
             <View style={styles.statsModalBody}>
               <Text style={styles.statsModalName}>{statsPlayer.n.toUpperCase()}</Text>
               <Text style={styles.statsModalMeta}>
@@ -572,10 +577,7 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
     overflow: 'hidden',
   },
-  statsRow: { flexDirection: 'row', gap: 6, marginTop: 3 },
-  statCell: { alignItems: 'center' },
-  statLabel: { fontFamily: F.extra, fontSize: 7, color: C.dim, letterSpacing: 0.4 },
-  statValue: { fontFamily: F.bold, fontSize: 12, color: '#cbd5e1' },
+  playerTeam: { fontFamily: F.bold, fontSize: 10, color: C.dim, flexShrink: 1 },
   playerOvr: { fontFamily: F.italicExtra, fontSize: 34, color: '#fff', lineHeight: 36 },
   playerOvrHot: { color: C.teal, textShadowColor: 'rgba(45,212,191,0.5)', textShadowRadius: 8, textShadowOffset: { width: 0, height: 0 } },
   emptyText: { textAlign: 'center', fontFamily: F.bold, fontSize: 16, color: C.dim, marginTop: 30 },

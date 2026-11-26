@@ -24,7 +24,7 @@ import Screen from '../components/Screen';
 import PressableScale from '../components/PressableScale';
 import GameButton from '../components/GameButton';
 import Icon from '../components/Icon';
-import PlayerCard from '../components/PlayerCard';
+import HexPlayerCard from '../components/HexPlayerCard';
 import AppModal from '../components/AppModal';
 import StatBars from '../components/StatBars';
 import { C, F } from '../theme';
@@ -189,7 +189,7 @@ export default function AuctionScreen() {
         </View>
 
         <View style={styles.lotArea}>
-          <PlayerCard
+          <HexPlayerCard
             player={player}
             width={cardW}
             animate
@@ -313,7 +313,7 @@ export default function AuctionScreen() {
       >
         {statsPlayer ? (
           <View style={styles.statsBody}>
-            <PlayerCard player={statsPlayer} width={138} />
+            <HexPlayerCard player={statsPlayer} width={138} />
             <View style={styles.statsBars}>
               <Text style={styles.statsName} numberOfLines={1}>{statsPlayer.n}</Text>
               <Text style={styles.statsMeta} numberOfLines={1}>
